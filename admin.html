@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Administration — Lotissement Harmonie 2 · SCI NKONIM</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+:root{--vert:#17443A;--vert2:#17845A;--or:#C9A227;--fond:#F7F4EC;--bord:#DDD6C4}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,Segoe UI,Roboto,sans-serif;background:var(--fond);color:#22302b}
+header{background:var(--vert);color:#fff;padding:14px 22px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+header h1{font-size:1.05rem;margin:0;letter-spacing:.03em}
+header .who{font-size:.8rem;opacity:.85}
+button{font:inherit;cursor:pointer}
+.btn{background:var(--vert2);color:#fff;border:0;border-radius:8px;padding:9px 16px}
+.btn.ghost{background:transparent;border:1px solid #ffffff88;color:#fff;padding:7px 13px;font-size:.85rem}
+.btn.small{padding:5px 10px;font-size:.8rem}
+.btn.warn{background:#a33}
+main{max-width:1100px;margin:0 auto;padding:22px 16px 60px}
+.card{background:#fff;border:1px solid var(--bord);border-radius:12px;padding:22px;margin:0 auto 18px;box-shadow:0 4px 14px rgba(0,0,0,.04)}
+.auth{max-width:420px;margin-top:8vh}
+.auth h2{margin:0 0 4px;color:var(--vert)}
+.auth p{color:#5c6a63;font-size:.9rem}
+label{display:block;font-size:.8rem;font-weight:600;margin:12px 0 4px;color:#3c4a44}
+input,select,textarea{width:100%;padding:10px 11px;border:1px solid var(--bord);border-radius:8px;font:inherit;background:#fff}
+input:focus,select:focus{outline:2px solid var(--vert2)}
+.err{color:#a33;font-size:.85rem;min-height:1.2em;margin-top:10px}
+.ok{color:var(--vert2)}
+.qr{ text-align:center;margin:14px 0}
+.qr img{width:190px;height:190px;border:1px solid var(--bord);border-radius:8px}
+.secret{font-family:monospace;font-size:.78rem;background:var(--fond);padding:6px 8px;border-radius:6px;word-break:break-all;display:block;margin-top:6px}
+nav.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+nav.tabs button{border:1px solid var(--bord);background:#fff;border-radius:20px;padding:8px 16px;font-size:.88rem}
+nav.tabs button.on{background:var(--vert);color:#fff;border-color:var(--vert)}
+table{width:100%;border-collapse:collapse;font-size:.85rem;background:#fff}
+th,td{padding:8px 9px;border-bottom:1px solid #EDE8DA;text-align:left;vertical-align:top}
+th{background:var(--fond);font-size:.75rem;text-transform:uppercase;letter-spacing:.04em;color:#5c6a63;position:sticky;top:0}
+.tblwrap{overflow-x:auto;max-height:62vh;overflow-y:auto;border:1px solid var(--bord);border-radius:10px}
+.badge{display:inline-block;padding:2px 9px;border-radius:12px;font-size:.72rem;font-weight:700}
+.b-dispo{background:#DFF3E7;color:#17845A}.b-vendu{background:#FBE2E2;color:#a33}
+.b-nkonim{background:#DDEEFB;color:#1a6aa8}.b-teya{background:#E8E8E8;color:#555}
+.b-solde{background:#DFF3E7;color:#17845A}.b-partiel{background:#FFF3D6;color:#9a7a10}.b-aucun{background:#FBE2E2;color:#a33}
+.kpis{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.kpi{flex:1;min-width:150px;background:#fff;border:1px solid var(--bord);border-radius:10px;padding:14px}
+.kpi .n{font-size:1.35rem;font-weight:700;color:var(--vert)}
+.kpi .l{font-size:.75rem;color:#5c6a63}
+.formgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;align-items:end}
+.hide{display:none !important}
+h3{color:var(--vert);margin:4px 0 12px}
+.note{font-size:.78rem;color:#77836c;margin-top:8px}
+</style>
+</head>
+<body>
+<header>
+  <h1>ADMINISTRATION — LOTISSEMENT HARMONIE 2</h1>
+  <div><span class="who" id="who"></span> <button class="btn ghost hide" id="btnLogout" onclick="logout()">Déconnexion</button></div>
+</header>
+<main>
+
+<!-- LOGIN -->
+<div class="card auth" id="viewLogin">
+  <h2>Connexion</h2>
+  <p>Espace réservé à la SCI NKONIM.</p>
+  <label>Email<input type="email" id="loginEmail" autocomplete="username"></label>
+  <label>Mot de passe<input type="password" id="loginPwd" autocomplete="current-password"></label>
+  <div style="margin-top:16px"><button class="btn" onclick="login()">Se connecter</button></div>
+  <div class="err" id="loginErr"></div>
+</div>
+
+<!-- SET PASSWORD (invitation) -->
+<div class="card auth hide" id="viewSetPwd">
+  <h2>Bienvenue — définissez votre mot de passe</h2>
+  <p>Choisissez un mot de passe robuste (12 caractères minimum recommandés, avec chiffres et symboles).</p>
+  <label>Nouveau mot de passe<input type="password" id="pwd1" autocomplete="new-password"></label>
+  <label>Confirmez le mot de passe<input type="password" id="pwd2" autocomplete="new-password"></label>
+  <div style="margin-top:16px"><button class="btn" onclick="setPassword()">Enregistrer et continuer</button></div>
+  <div class="err" id="pwdErr"></div>
+</div>
+
+<!-- ENROLL MFA -->
+<div class="card auth hide" id="viewEnroll">
+  <h2>Activer la double authentification</h2>
+  <p>Scannez ce QR code avec Google Authenticator (ou Authy, Microsoft Authenticator…), puis saisissez le code à 6 chiffres.</p>
+  <div class="qr" id="qrZone"></div>
+  <span class="secret" id="secretZone"></span>
+  <label>Code à 6 chiffres<input id="enrollCode" inputmode="numeric" maxlength="6"></label>
+  <div style="margin-top:14px"><button class="btn" onclick="verifyEnroll()">Valider</button></div>
+  <div class="err" id="enrollErr"></div>
+</div>
+
+<!-- CHALLENGE MFA -->
+<div class="card auth hide" id="viewMfa">
+  <h2>Double authentification</h2>
+  <p>Saisissez le code à 6 chiffres de votre application d'authentification.</p>
+  <label>Code<input id="mfaCode" inputmode="numeric" maxlength="6"></label>
+  <div style="margin-top:14px"><button class="btn" onclick="verifyMfa()">Vérifier</button></div>
+  <div class="err" id="mfaErr"></div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="hide" id="viewDash">
+  <div class="kpis" id="kpis"></div>
+  <nav class="tabs">
+    <button data-tab="suivi" class="on" onclick="showTab('suivi',this)">Suivi encaissements</button>
+    <button data-tab="ventes" onclick="showTab('ventes',this)">Ventes</button>
+    <button data-tab="paiements" onclick="showTab('paiements',this)">Paiements</button>
+    <button data-tab="lots" onclick="showTab('lots',this)">Parcelles</button>
+    <button data-tab="prospects" onclick="showTab('prospects',this)">Prospects</button>
+  </nav>
+
+  <div id="tab-suivi" class="card">
+    <h3>Suivi des encaissements</h3>
+    <div class="tblwrap"><table id="tblSuivi"></table></div>
+    <p class="note">Soldé = totalement payé · Partiel = acompte(s) reçu(s) · La colonne "reste à payer" se met à jour à chaque paiement enregistré.</p>
+  </div>
+
+  <div id="tab-ventes" class="card hide">
+    <h3>Enregistrer une vente</h3>
+    <div class="formgrid">
+      <label>Lot n°<select id="vLot"></select></label>
+      <label>Acquéreur<input id="vAcq"></label>
+      <label>Téléphone<input id="vTel"></label>
+      <label>Montant (FCFA)<input id="vMontant" type="number" min="0"></label>
+      <label>Date de vente<input id="vDate" type="date"></label>
+      <label>Échéance finale<input id="vEch" type="date"></label>
+      <label>Notes<input id="vNotes"></label>
+      <button class="btn" onclick="addVente()">Enregistrer</button>
+    </div>
+    <div class="err" id="vErr"></div>
+    <p class="note">La vente passe automatiquement le lot en « vendu » : il disparaît du site public immédiatement.</p>
+    <h3 style="margin-top:22px">Ventes enregistrées</h3>
+    <div class="tblwrap"><table id="tblVentes"></table></div>
+  </div>
+
+  <div id="tab-paiements" class="card hide">
+    <h3>Enregistrer un paiement</h3>
+    <div class="formgrid">
+      <label>Vente (lot — acquéreur)<select id="pVente"></select></label>
+      <label>Date<input id="pDate" type="date"></label>
+      <label>Montant (FCFA)<input id="pMontant" type="number" min="0"></label>
+      <label>Mode<select id="pMode"><option>Espèces</option><option>Virement</option><option>Mobile Money</option><option>Chèque</option><option>Autre</option></select></label>
+      <label>Référence<input id="pRef"></label>
+      <button class="btn" onclick="addPaiement()">Enregistrer</button>
+    </div>
+    <div class="err" id="pErr"></div>
+    <h3 style="margin-top:22px">Historique des paiements</h3>
+    <div class="tblwrap"><table id="tblPaiements"></table></div>
+  </div>
+
+  <div id="tab-lots" class="card hide">
+    <h3>Les 120 parcelles du lotissement</h3>
+    <div class="tblwrap"><table id="tblLots"></table></div>
+    <p class="note">Changer un statut le répercute immédiatement sur le site public (seuls les lots « disponible » y apparaissent).</p>
+  </div>
+
+  <div id="tab-prospects" class="card hide">
+    <h3>Demandes reçues via le site</h3>
+    <div class="tblwrap"><table id="tblProspects"></table></div>
+  </div>
+</div>
+</main>
+
+<script>
+const SUPABASE_URL='https://jlawnhtkwkqpbhxtwedl.supabase.co';
+const SUPABASE_KEY='sb_publishable_lOtRr5mZZgJVa3nmA1CrBA_9TtH0zYg';
+const CAME_FROM_INVITE = /type=(invite|recovery|magiclink|signup)/.test(window.location.hash);
+const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const fmt = n => n==null?'—':Number(n).toLocaleString('fr-FR');
+const $ = id => document.getElementById(id);
+const STATUTS = ['disponible','vendu','patrimoine_sci_nkonim','patrimoine_teya_soukou','reserve'];
+const badge = s => ({'disponible':'b-dispo','vendu':'b-vendu','patrimoine_sci_nkonim':'b-nkonim','patrimoine_teya_soukou':'b-teya'}[s]||'b-teya');
+let enrollingFactorId=null;
+
+function show(id){['viewLogin','viewSetPwd','viewEnroll','viewMfa','viewDash'].forEach(v=>$(v).classList.add('hide'));$(id).classList.remove('hide');}
+function showTab(t,btn){document.querySelectorAll('[id^=tab-]').forEach(e=>e.classList.add('hide'));$('tab-'+t).classList.remove('hide');document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('on'));btn.classList.add('on');}
+
+async function init(){
+  await new Promise(r=>setTimeout(r,400));
+  const {data:{session}} = await supa.auth.getSession();
+  if(!session){show('viewLogin');return;}
+  if(CAME_FROM_INVITE){history.replaceState(null,'',location.pathname);show('viewSetPwd');$('pwd1').focus();return;}
+  await routeAfterLogin();
+}
+async function setPassword(){
+  $('pwdErr').textContent='';
+  const a=$('pwd1').value, b=$('pwd2').value;
+  if(a.length<8){$('pwdErr').textContent='8 caractères minimum.';return;}
+  if(a!==b){$('pwdErr').textContent='Les deux mots de passe ne correspondent pas.';return;}
+  const {error}=await supa.auth.updateUser({password:a});
+  if(error){$('pwdErr').textContent='Erreur : '+error.message;return;}
+  await routeAfterLogin();
+}
+async function login(){
+  $('loginErr').textContent='';
+  const {error} = await supa.auth.signInWithPassword({email:$('loginEmail').value.trim(),password:$('loginPwd').value});
+  if(error){$('loginErr').textContent='Identifiants incorrects.';return;}
+  await routeAfterLogin();
+}
+async function routeAfterLogin(){
+  const {data:aal} = await supa.auth.mfa.getAuthenticatorAssuranceLevel();
+  if(aal.currentLevel==='aal2'){return openDash();}
+  const {data:f} = await supa.auth.mfa.listFactors();
+  const verified=(f&&f.totp||[]).filter(x=>x.status==='verified');
+  if(verified.length===0){return startEnroll();}
+  show('viewMfa');$('mfaCode').focus();
+}
+async function startEnroll(){
+  const {data,error} = await supa.auth.mfa.enroll({factorType:'totp',friendlyName:'SCI NKONIM'});
+  if(error){show('viewLogin');$('loginErr').textContent='Erreur MFA : '+error.message;return;}
+  enrollingFactorId=data.id;
+  $('qrZone').innerHTML='<img alt="QR code" src="'+data.totp.qr_code+'">';
+  $('secretZone').textContent='Clé manuelle : '+data.totp.secret;
+  show('viewEnroll');$('enrollCode').focus();
+}
+async function verifyEnroll(){
+  $('enrollErr').textContent='';
+  const code=$('enrollCode').value.trim();
+  const {data:ch,error:e1}=await supa.auth.mfa.challenge({factorId:enrollingFactorId});
+  if(e1){$('enrollErr').textContent=e1.message;return;}
+  const {error:e2}=await supa.auth.mfa.verify({factorId:enrollingFactorId,challengeId:ch.id,code});
+  if(e2){$('enrollErr').textContent='Code invalide, réessayez.';return;}
+  openDash();
+}
+async function verifyMfa(){
+  $('mfaErr').textContent='';
+  const {data:f}=await supa.auth.mfa.listFactors();
+  const factor=(f.totp||[]).filter(x=>x.status==='verified')[0];
+  const {data:ch,error:e1}=await supa.auth.mfa.challenge({factorId:factor.id});
+  if(e1){$('mfaErr').textContent=e1.message;return;}
+  const {error:e2}=await supa.auth.mfa.verify({factorId:factor.id,challengeId:ch.id,code:$('mfaCode').value.trim()});
+  if(e2){$('mfaErr').textContent='Code invalide, réessayez.';return;}
+  openDash();
+}
+async function logout(){await supa.auth.signOut();location.reload();}
+
+async function openDash(){
+  const {data:{user}}=await supa.auth.getUser();
+  $('who').textContent=user?user.email:'';
+  $('btnLogout').classList.remove('hide');
+  show('viewDash');
+  await refresh();
+}
+async function refresh(){
+  const [lots,ventes,paiements,suivi,prospects]=await Promise.all([
+    supa.from('lots').select('numero,ilot,statut,superficie_m2,prix_fcfa').order('numero'),
+    supa.from('ventes').select('*').order('numero_lot'),
+    supa.from('paiements').select('*').order('date_paiement',{ascending:false}),
+    supa.from('suivi_ventes').select('*'),
+    supa.from('prospects').select('*').order('created_at',{ascending:false})
+  ]);
+  if(lots.error){alert('Accès refusé — session 2FA requise ('+lots.error.message+')');return;}
+  renderKpis(lots.data,suivi.data||[]);
+  renderLots(lots.data);
+  renderVentes(ventes.data||[]);
+  renderPaiements(paiements.data||[],ventes.data||[]);
+  renderSuivi(suivi.data||[]);
+  renderProspects(prospects.data||[]);
+  fillSelects(lots.data,ventes.data||[]);
+}
+function renderKpis(lots,suivi){
+  const c=s=>lots.filter(l=>l.statut===s).length;
+  const enc=suivi.reduce((a,r)=>a+Number(r.total_encaisse||0),0);
+  const reste=suivi.reduce((a,r)=>a+Number(r.reste_a_payer||0),0);
+  $('kpis').innerHTML=
+    '<div class="kpi"><div class="n">'+c('disponible')+'</div><div class="l">lots disponibles</div></div>'+
+    '<div class="kpi"><div class="n">'+c('vendu')+'</div><div class="l">lots vendus</div></div>'+
+    '<div class="kpi"><div class="n">'+(c('patrimoine_sci_nkonim')+c('patrimoine_teya_soukou'))+'</div><div class="l">patrimoine familial</div></div>'+
+    '<div class="kpi"><div class="n">'+fmt(enc)+'</div><div class="l">FCFA encaissés (ventes suivies)</div></div>'+
+    '<div class="kpi"><div class="n">'+fmt(reste)+'</div><div class="l">FCFA restant à encaisser</div></div>';
+}
+function renderSuivi(rows){
+  $('tblSuivi').innerHTML='<tr><th>Lot</th><th>Acquéreur</th><th>Montant vente</th><th>Encaissé</th><th>Reste à payer</th><th>État</th><th>Vente</th><th>Échéance</th></tr>'+
+    rows.map(r=>'<tr><td><b>'+r.numero_lot+'</b></td><td>'+(r.acquereur||'')+'</td><td>'+fmt(r.montant_vente)+'</td><td>'+fmt(r.total_encaisse)+'</td><td><b>'+fmt(r.reste_a_payer)+'</b></td><td><span class="badge b-'+(r.etat==='solde'?'solde':r.etat==='partiel'?'partiel':'aucun')+'">'+r.etat+'</span></td><td>'+(r.date_vente||'')+'</td><td>'+(r.echeance_finale||'')+'</td></tr>').join('')||'';
+  if(rows.length===0)$('tblSuivi').innerHTML+='<tr><td colspan="8">Aucune vente suivie pour le moment.</td></tr>';
+}
+function renderVentes(rows){
+  $('tblVentes').innerHTML='<tr><th>Lot</th><th>Acquéreur</th><th>Téléphone</th><th>Montant</th><th>Date</th><th>Échéance</th><th>Notes</th></tr>'+
+    rows.map(r=>'<tr><td><b>'+r.numero_lot+'</b></td><td>'+(r.acquereur||'')+'</td><td>'+(r.telephone||'')+'</td><td>'+fmt(r.montant_vente)+'</td><td>'+(r.date_vente||'')+'</td><td>'+(r.echeance_finale||'')+'</td><td>'+(r.notes||'')+'</td></tr>').join('');
+}
+function renderPaiements(rows,ventes){
+  const vlot={};ventes.forEach(v=>vlot[v.id]='Lot '+v.numero_lot+' — '+v.acquereur);
+  $('tblPaiements').innerHTML='<tr><th>Vente</th><th>Date</th><th>Montant</th><th>Mode</th><th>Référence</th></tr>'+
+    rows.map(r=>'<tr><td>'+(vlot[r.vente_id]||r.vente_id)+'</td><td>'+r.date_paiement+'</td><td>'+fmt(r.montant)+'</td><td>'+(r.mode||'')+'</td><td>'+(r.reference||'')+'</td></tr>').join('');
+}
+function renderLots(rows){
+  $('tblLots').innerHTML='<tr><th>N°</th><th>Îlot</th><th>Superficie</th><th>Prix (FCFA)</th><th>Statut</th><th></th></tr>'+
+    rows.map(r=>'<tr><td><b>'+r.numero+'</b></td><td>'+(r.ilot??'—')+'</td><td>'+(r.superficie_m2?fmt(r.superficie_m2)+' m²':'—')+'</td><td>'+fmt(r.prix_fcfa)+'</td>'+
+    '<td><span class="badge '+badge(r.statut)+'">'+r.statut+'</span></td>'+
+    '<td><select onchange="majStatut('+r.numero+',this)"><option value="">changer…</option>'+STATUTS.filter(s=>s!==r.statut).map(s=>'<option value="'+s+'">'+s+'</option>').join('')+'</select></td></tr>').join('');
+}
+function renderProspects(rows){
+  $('tblProspects').innerHTML='<tr><th>Date</th><th>Nom</th><th>Téléphone</th><th>Email</th><th>Demande</th><th>Lots</th><th>Message</th></tr>'+
+    rows.map(r=>'<tr><td>'+new Date(r.created_at).toLocaleString('fr-FR')+'</td><td><b>'+(r.nom||'')+'</b></td><td>'+(r.telephone||'')+'</td><td>'+(r.email||'')+'</td><td>'+(r.type_demande||'')+'</td><td>'+(r.lots||'')+'</td><td>'+(r.message||'')+'</td></tr>').join('');
+  if(rows.length===0)$('tblProspects').innerHTML+='<tr><td colspan="7">Aucune demande pour le moment.</td></tr>';
+}
+function fillSelects(lots,ventes){
+  $('vLot').innerHTML=lots.filter(l=>l.statut==='disponible').map(l=>'<option value="'+l.numero+'">Lot '+l.numero+(l.ilot?' (îlot '+l.ilot+')':'')+'</option>').join('');
+  $('pVente').innerHTML=ventes.map(v=>'<option value="'+v.id+'">Lot '+v.numero_lot+' — '+v.acquereur+'</option>').join('');
+}
+async function majStatut(numero,sel){
+  if(!sel.value)return;
+  const {error}=await supa.from('lots').update({statut:sel.value}).eq('numero',numero);
+  if(error){alert('Erreur : '+error.message);return;}
+  refresh();
+}
+async function addVente(){
+  $('vErr').textContent='';
+  const row={numero_lot:Number($('vLot').value),acquereur:$('vAcq').value.trim(),telephone:$('vTel').value.trim()||null,
+    montant_vente:Number($('vMontant').value),date_vente:$('vDate').value||null,echeance_finale:$('vEch').value||null,notes:$('vNotes').value.trim()||null};
+  if(!row.numero_lot||!row.acquereur||!row.montant_vente){$('vErr').textContent='Lot, acquéreur et montant sont obligatoires.';return;}
+  const {error}=await supa.from('ventes').insert(row);
+  if(error){$('vErr').textContent='Erreur : '+error.message;return;}
+  $('vAcq').value='';$('vTel').value='';$('vMontant').value='';$('vNotes').value='';
+  $('vErr').innerHTML='<span class="ok">✓ Vente enregistrée — le lot est retiré du site.</span>';
+  refresh();
+}
+async function addPaiement(){
+  $('pErr').textContent='';
+  const row={vente_id:Number($('pVente').value),date_paiement:$('pDate').value||new Date().toISOString().slice(0,10),
+    montant:Number($('pMontant').value),mode:$('pMode').value,reference:$('pRef').value.trim()||null};
+  if(!row.vente_id||!row.montant){$('pErr').textContent='Vente et montant sont obligatoires.';return;}
+  const {error}=await supa.from('paiements').insert(row);
+  if(error){$('pErr').textContent='Erreur : '+error.message;return;}
+  $('pMontant').value='';$('pRef').value='';
+  $('pErr').innerHTML='<span class="ok">✓ Paiement enregistré.</span>';
+  refresh();
+}
+['loginPwd'].forEach(id=>$(id).addEventListener('keydown',e=>{if(e.key==='Enter')login();}));
+$('mfaCode').addEventListener('keydown',e=>{if(e.key==='Enter')verifyMfa();});
+$('enrollCode').addEventListener('keydown',e=>{if(e.key==='Enter')verifyEnroll();});
+init();
+</script>
+</body>
+</html>
