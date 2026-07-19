@@ -696,6 +696,16 @@ svg.leaflet-image-layer.leaflet-interactive path {
 .modal .btn-gold{width:100%;text-align:center;border:0;cursor:pointer;font:inherit;margin-top:6px}
 #formStatus{margin:12px 0 0;font-size:.92rem;color:#17443A;text-align:center;min-height:1.2em}
 
+
+.lots-dd{position:relative;margin-top:5px}
+.lots-dd-btn{display:block;width:100%;padding:11px 12px;border:1px solid #D8D2C2;border-radius:8px;font:inherit;font-size:.95rem;background:#fff;text-align:left;cursor:pointer;color:#33413c}
+.lots-dd-btn:after{content:'▾';float:right;color:#66746e}
+.lots-dd-list{position:absolute;z-index:10;left:0;right:0;top:calc(100% + 4px);background:#fff;border:1px solid #D8D2C2;border-radius:8px;max-height:220px;overflow-y:auto;box-shadow:0 12px 30px rgba(0,0,0,.15)}
+.lots-dd-list label{display:flex;align-items:center;gap:9px;padding:9px 12px;margin:0;font-weight:500;cursor:pointer;border-bottom:1px solid #F0EBDD}
+.lots-dd-list label:last-child{border-bottom:0}
+.lots-dd-list label:hover{background:#F7F3E8}
+.lots-dd-list input[type=checkbox]{width:16px;height:16px;margin:0;display:inline-block;accent-color:#17845A}
+
 </style>
 <script>/* @preserve
  * Leaflet 1.9.4, a JS library for interactive maps. https://leafletjs.com
@@ -1052,6 +1062,7 @@ SALE.features
     });
     grid.appendChild(d);
   });
+if(window.populateLotsDD)populateLotsDD(SALE);
 });
 </script>
 
@@ -1071,7 +1082,13 @@ SALE.features
           <option value="Informations / plan complet">Informations / plan complet</option>
         </select>
       </label>
-      <label>Lot(s) qui vous intéressent<input name="lots" placeholder="ex. Lot 35, Lot 44"></label>
+      <label>Lot(s) qui vous intéressent
+        <div class="lots-dd" id="lotsDD">
+          <button type="button" class="lots-dd-btn" id="lotsDDBtn" onclick="toggleLotsDD(event)">Sélectionnez un ou plusieurs lots…</button>
+          <div class="lots-dd-list" id="lotsDDList" hidden></div>
+        </div>
+        <input type="hidden" name="lots" id="lotsHidden">
+      </label>
       <label>Message<textarea name="message" rows="3" placeholder="Précisez votre projet, vos disponibilités…"></textarea></label>
       <button type="submit" class="btn btn-gold" id="formSubmitBtn">Envoyer ma demande</button>
       <p id="formStatus" role="status"></p>
@@ -1079,6 +1096,34 @@ SALE.features
   </div>
 </div>
 <script>
+function populateLotsDD(SALE){
+  var list=document.getElementById('lotsDDList');
+  if(!list)return;
+  list.innerHTML='';
+  SALE.features.slice()
+    .sort(function(a,b){return a.properties.lot-b.properties.lot;})
+    .forEach(function(f){
+      var p=f.properties;
+      var lab=document.createElement('label');
+      lab.innerHTML='<input type="checkbox" value="Lot '+p.lot+'"> Îlot '+p.ilot+' — Lot '+p.lot+' ('+p.sup+' m²)';
+      lab.querySelector('input').addEventListener('change',updateLotsDD);
+      list.appendChild(lab);
+    });
+}
+function updateLotsDD(){
+  var sel=[].slice.call(document.querySelectorAll('#lotsDDList input:checked')).map(function(c){return c.value;});
+  document.getElementById('lotsHidden').value=sel.join(', ');
+  document.getElementById('lotsDDBtn').textContent=sel.length?sel.join(', '):'Sélectionnez un ou plusieurs lots…';
+}
+function toggleLotsDD(e){
+  e.stopPropagation();
+  var l=document.getElementById('lotsDDList');
+  l.hidden=!l.hidden;
+}
+document.addEventListener('click',function(e){
+  var dd=document.getElementById('lotsDD');
+  if(dd&&!dd.contains(e.target))document.getElementById('lotsDDList').hidden=true;
+});
 function openForm(){document.getElementById('formModal').hidden=false;document.body.style.overflow='hidden';}
 function closeForm(){document.getElementById('formModal').hidden=true;document.body.style.overflow='';}
 document.getElementById('formModal').addEventListener('click',function(e){if(e.target===this)closeForm();});
