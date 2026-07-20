@@ -7,6 +7,8 @@
 <title>Administration — Lotissement Harmonie 2 · SCI NKONIM</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Ccircle cx=%2732%27 cy=%2732%27 r=%2730%27 fill=%27%2317443A%27 stroke=%27%23C9A227%27 stroke-width=%273%27/%3E%3Ctext x=%2732%27 y=%2742%27 font-family=%27Georgia%27 font-size=%2726%27 font-weight=%27bold%27 fill=%27%23C9A227%27 text-anchor=%27middle%27%3EH2%3C/text%3E%3C/svg%3E">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 :root{--vert:#17443A;--vert2:#17845A;--or:#C9A227;--fond:#F7F4EC;--bord:#DDD6C4}
 *{box-sizing:border-box}
@@ -167,9 +169,16 @@ h3{color:var(--vert);margin:4px 0 12px}
     <div class="kpis" id="audKpis"></div>
     <h3 style="margin-top:18px">Pages vues par jour</h3>
     <div id="audChart" style="overflow-x:auto"></div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:18px">
+    <h3 style="margin-top:18px">Carte des connexions</h3>
+    <div id="audMap" style="height:380px;border:1px solid var(--bord);border-radius:10px"></div>
+    <p class="note" id="audMapNote">Chaque point correspond à une zone de connexion (position approximative, au niveau de la ville). Taille du point = nombre de pages vues.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-top:18px">
       <div>
-        <h3>Provenance des visiteurs</h3>
+        <h3>Pays</h3>
+        <div class="tblwrap" style="max-height:300px"><table id="tblPays"></table></div>
+      </div>
+      <div>
+        <h3>Provenance</h3>
         <div class="tblwrap" style="max-height:300px"><table id="tblRef"></table></div>
       </div>
       <div>
@@ -194,7 +203,7 @@ const badge = s => ({'disponible':'b-dispo','vendu':'b-vendu','patrimoine_sci_nk
 let enrollingFactorId=null;
 
 function show(id){['viewLogin','viewSetPwd','viewEnroll','viewMfa','viewDash'].forEach(v=>$(v).classList.add('hide'));$(id).classList.remove('hide');}
-function showTab(t,btn){document.querySelectorAll('[id^=tab-]').forEach(e=>e.classList.add('hide'));$('tab-'+t).classList.remove('hide');document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('on'));btn.classList.add('on');}
+function showTab(t,btn){document.querySelectorAll('[id^=tab-]').forEach(e=>e.classList.add('hide'));$('tab-'+t).classList.remove('hide');document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('on'));btn.classList.add('on');if(t==='audience'&&window._audMap){setTimeout(()=>{try{window._audMap.invalidateSize();}catch(e){}},150);}}
 
 async function init(){
   await new Promise(r=>setTimeout(r,400));
@@ -270,7 +279,7 @@ async function refresh(){
     supa.from('paiements').select('*').order('date_paiement',{ascending:false}),
     supa.from('suivi_ventes').select('*'),
     supa.from('prospects').select('*').order('created_at',{ascending:false}),
-    supa.from('visites').select('ts,page,referrer,ecran,nouvelle_visite').gte('ts',d30).order('ts',{ascending:false}).limit(20000)
+    supa.from('visites').select('ts,page,referrer,ecran,nouvelle_visite,pays,ville,lat,lon').gte('ts',d30).order('ts',{ascending:false}).limit(20000)
   ]);
   if(lots.error){alert('Accès refusé — session 2FA requise ('+lots.error.message+')');return;}
   renderKpis(lots.data,suivi.data||[]);
@@ -323,6 +332,37 @@ function renderAudience(rows){
   $('tblEcran').innerHTML='<tr><th>Appareil</th><th>Pages vues</th><th>%</th></tr>'+
     Object.entries(ecr).sort((a,b)=>b[1]-a[1]).map(([k,n])=>'<tr><td>'+k+'</td><td>'+fmt(n)+'</td><td>'+(pv?Math.round(100*n/pv):0)+'%</td></tr>').join('');
   if(pv===0)$('tblEcran').innerHTML+='<tr><td colspan="3">Aucune donnée pour le moment.</td></tr>';
+  // ---- pays ----
+  const pays={};rows.forEach(r=>{const k=r.pays||'??';pays[k]=(pays[k]||0)+1;});
+  const topPays=Object.entries(pays).sort((a,b)=>b[1]-a[1]).slice(0,15);
+  $('tblPays').innerHTML='<tr><th>Pays</th><th>Pages vues</th><th>%</th></tr>'+
+    topPays.map(([k,n])=>'<tr><td>'+flagEmoji(k)+' '+paysNom(k)+'</td><td>'+fmt(n)+'</td><td>'+(pv?Math.round(100*n/pv):0)+'%</td></tr>').join('');
+  if(topPays.length===0)$('tblPays').innerHTML+='<tr><td colspan="3">Aucune donnée pour le moment.</td></tr>';
+  // ---- carte des connexions ----
+  renderMap(rows);
+}
+const _regionNames=(function(){try{return new Intl.DisplayNames(['fr'],{type:'region'});}catch(e){return null;}})();
+function paysNom(cc){if(!cc||cc==='??')return 'Inconnu';try{return (_regionNames&&_regionNames.of(cc.toUpperCase()))||cc;}catch(e){return cc;}}
+function flagEmoji(cc){if(!cc||!/^[A-Za-z]{2}$/.test(cc))return '🌐';return String.fromCodePoint.apply(null,cc.toUpperCase().split('').map(c=>0x1F1E6+c.charCodeAt(0)-65));}
+function renderMap(rows){
+  if(typeof L==='undefined'){$('audMapNote').textContent='La carte n’a pas pu se charger (bibliothèque Leaflet indisponible).';return;}
+  if(!window._audMap){
+    window._audMap=L.map('audMap',{scrollWheelZoom:false}).setView([12,0],2);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'Esri, Maxar',maxZoom:16}).addTo(window._audMap);
+    window._audLayer=L.layerGroup().addTo(window._audMap);
+  }
+  window._audLayer.clearLayers();
+  const geo=rows.filter(r=>r.lat!=null&&r.lon!=null);
+  const groups={};
+  geo.forEach(r=>{const key=(Math.round(r.lat*2)/2)+','+(Math.round(r.lon*2)/2);
+    if(!groups[key])groups[key]={lat:r.lat,lon:r.lon,n:0,ville:r.ville,pays:r.pays};groups[key].n++;});
+  const g=Object.values(groups);
+  g.forEach(z=>{
+    L.circleMarker([z.lat,z.lon],{radius:Math.min(6+z.n*2,24),color:'#C9A227',weight:2,fillColor:'#17845A',fillOpacity:.55})
+     .bindPopup('<b>'+((z.ville?z.ville+' · ':'')+paysNom(z.pays)+'</b><br>'+z.n+' page(s) vue(s)'))
+     .addTo(window._audLayer);
+  });
+  setTimeout(()=>{try{window._audMap.invalidateSize();}catch(e){}},200);
 }
 function renderKpis(lots,suivi){
   const c=s=>lots.filter(l=>l.statut===s).length;

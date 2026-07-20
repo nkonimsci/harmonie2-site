@@ -1147,15 +1147,16 @@ document.getElementById('prospectForm').addEventListener('submit',async function
 });
 
 /* Mesure d'audience interne (première partie, zéro tiers, zéro cookie).
-   Enregistre uniquement : page, domaine référent, type d'écran, nouvelle visite.
-   Stocké dans notre propre base Supabase — aucune donnée personnelle. */
+   Enregistre : page, domaine référent, type d'écran, nouvelle visite.
+   Le pays / la ville / la position approximative sont ajoutés côté serveur
+   (fonction /api/visite, réseau Vercel) — aucune IP n'est stockée, aucune
+   donnée personnelle, aucun service tiers. */
 try{
   var h2nv=!sessionStorage.getItem('h2v');
   if(h2nv){try{sessionStorage.setItem('h2v','1');}catch(_e){}}
   var h2ref='';
   try{if(document.referrer){var rh=new URL(document.referrer).hostname;if(rh&&rh!==location.hostname)h2ref=rh;}}catch(_e){}
-  fetch(SUPABASE_URL+'/rest/v1/visites',{method:'POST',
-    headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},
+  fetch('/api/visite',{method:'POST',headers:{'Content-Type':'application/json'},keepalive:true,
     body:JSON.stringify({page:location.pathname||'/',referrer:h2ref||null,ecran:(window.innerWidth<768?'mobile':'ordinateur'),nouvelle_visite:h2nv})
   }).catch(function(){});
 }catch(e){}
