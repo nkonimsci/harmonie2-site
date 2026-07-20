@@ -347,8 +347,17 @@ function flagEmoji(cc){if(!cc||!/^[A-Za-z]{2}$/.test(cc))return '🌐';return St
 function renderMap(rows){
   if(typeof L==='undefined'){$('audMapNote').textContent='La carte n’a pas pu se charger (bibliothèque Leaflet indisponible).';return;}
   if(!window._audMap){
-    window._audMap=L.map('audMap',{scrollWheelZoom:false}).setView([12,0],2);
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'Esri, Maxar',maxZoom:16}).addTo(window._audMap);
+    window._audMap=L.map('audMap',{scrollWheelZoom:true}).setView([12,0],2);
+    var attrEsri='Tuiles &copy; Esri', attrOsm='&copy; OpenStreetMap', attrCarto='&copy; OpenStreetMap, &copy; CARTO';
+    var fonds={
+      'Satellite (Esri)':L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:attrEsri,maxZoom:18}),
+      'Gris clair N&B (Esri)':L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',{attribution:attrEsri,maxZoom:16}),
+      'OSM standard':L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:attrOsm,maxZoom:19}),
+      'Carto clair (N&B)':L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{attribution:attrCarto,subdomains:'abcd',maxZoom:20}),
+      'Carto sombre':L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:attrCarto,subdomains:'abcd',maxZoom:20})
+    };
+    fonds['Satellite (Esri)'].addTo(window._audMap);
+    L.control.layers(fonds,null,{collapsed:false,position:'topright'}).addTo(window._audMap);
     window._audLayer=L.layerGroup().addTo(window._audMap);
   }
   window._audLayer.clearLayers();
