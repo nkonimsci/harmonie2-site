@@ -1037,7 +1037,7 @@ map = L.map('map', {scrollWheelZoom:false, maxBoundsViscosity:0.5, bounceAtZoomL
 var fondEsri = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:17,attribution:'Esri World Imagery'}).addTo(map);
 var fondOsm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'});
 L.control.layers({'Satellite (Esri)':fondEsri,'OSM standard':fondOsm},null,{position:'topright'}).addTo(map);
-L.geoJSON(CTX,{style:{color:'#ffffff',weight:1,opacity:.5,fillColor:'#8899aa',fillOpacity:.10}}).addTo(map);
+var ctxLayer = L.geoJSON(CTX,{style:{color:'#ffffff',weight:1,opacity:.5,fillColor:'#8899aa',fillOpacity:.10}}).addTo(map);
 saleLayer = L.geoJSON(SALE,{
   style:{color:'#35E08A',weight:2.5,fillColor:'#17845A',fillOpacity:.5},
   onEachFeature:(f,l)=>{
@@ -1052,14 +1052,18 @@ map.fitBounds(saleLayer.getBounds().pad(0.4));
 var CADRE = L.latLngBounds([[4.90,-4.35],[5.95,-2.85]]);
 map.setMinZoom(map.getBoundsZoom(CADRE));
 var SITE = saleLayer.getBounds().getCenter();
-// Le site doit rester visible QUEL QUE SOIT le zoom : le cadre de navigation
-// (maxBounds) est recalculé autour du site selon la taille du viewport, avec
-// rebond souple — impossible de faire sortir le site de la carte.
-function contraindreSite(){
-  var v=map.getBounds(), dLat=v.getNorth()-v.getSouth(), dLng=v.getEast()-v.getWest();
-  map.setMaxBounds(L.latLngBounds([SITE.lat-dLat,SITE.lng-dLng],[SITE.lat+dLat,SITE.lng+dLng]));
-}
-map.on('zoomend',contraindreSite); contraindreSite();
+// Zone de navigation = boîte du site (lotissement) ÉLARGIE DE ~3 KM.
+// On peut paner librement dans toute cette étendue à n'importe quel zoom,
+// jusqu'à 3 km au-delà du site ; rebond souple aux bords (maxBoundsViscosity).
+var MARGE_KM = 3;
+var sboite = (ctxLayer && ctxLayer.getBounds().isValid()) ? ctxLayer.getBounds() : saleLayer.getBounds();
+var dLatKm = MARGE_KM/111.0;
+var dLngKm = MARGE_KM/(111.320*Math.cos(sboite.getCenter().lat*Math.PI/180));
+var BOITE = L.latLngBounds(
+  [sboite.getSouth()-dLatKm, sboite.getWest()-dLngKm],
+  [sboite.getNorth()+dLatKm, sboite.getEast()+dLngKm]
+);
+map.setMaxBounds(BOITE);
 // Point rouge du site quand on dézoome (les lots sont alors invisibles)
 redDot = L.circleMarker(SITE,{radius:9,color:'#ffffff',weight:3,fillColor:'#E11414',fillOpacity:1,className:'sitedot'})
   .bindTooltip('Lotissement Harmonie 2',{permanent:true,direction:'top',offset:[0,-10],className:'sitelbl'})
