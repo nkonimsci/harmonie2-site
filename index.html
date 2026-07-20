@@ -793,6 +793,8 @@ section.pad{padding:88px 0}
 .map-note{font-size:.83rem;color:#66746e;margin-top:10px}
 .ilotbadge{background:#C69A3A;border:2px solid #fff;border-radius:50%;display:grid;place-items:center;color:#20180a;font-weight:800;font-family:'Fraunces',serif;box-shadow:0 2px 8px rgba(0,0,0,.45);font-size:13px}
 .lotlbl{background:transparent;border:none;box-shadow:none;color:#fff;font-weight:700;font-size:11px;text-shadow:0 0 4px #000}
+.sitelbl{background:rgba(20,24,22,.85);border:none;box-shadow:0 2px 8px rgba(0,0,0,.4);color:#fff;font-weight:800;font-size:12px;padding:3px 9px;border-radius:20px}
+.sitelbl::before{border-top-color:rgba(20,24,22,.85)}
 .leaflet-popup-content{font-family:'Figtree',sans-serif;font-size:.9rem;line-height:1.55}
 
 /* Lots */
@@ -909,7 +911,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
       <p>Les parcelles en vert sont celles encore en vente. Cliquez sur un lot pour voir sa superficie et son prix.</p>
     </div>
     <div id="map"></div>
-    <p class="map-note">Contours issus du plan de morcellement officiel (données géomètre, projection UTM 30N). Fond : imagerie satellite Esri.</p>
+    <p class="map-note">Contours issus du plan de morcellement officiel (données géomètre, projection UTM 30N). Fond de carte au choix (satellite Esri ou OpenStreetMap) — sélecteur en haut à droite.</p>
   </div>
 </section>
 
@@ -1015,21 +1017,43 @@ loadSale().then(function(SALE){
 const fmt = n => n.toLocaleString('fr-FR');
 
 // Carte
-let map=null, layers={};
+let map=null, layers={}, saleLayer=null, redDot=null;
 try{
-map = L.map('map', {scrollWheelZoom:false});
-L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:17,attribution:'Esri World Imagery'}).addTo(map);
+map = L.map('map', {scrollWheelZoom:false, maxBoundsViscosity:0.5, bounceAtZoomLimits:true});
+var fondEsri = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:17,attribution:'Esri World Imagery'}).addTo(map);
+var fondOsm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'});
+L.control.layers({'Satellite (Esri)':fondEsri,'OSM standard':fondOsm},null,{position:'topright'}).addTo(map);
 L.geoJSON(CTX,{style:{color:'#ffffff',weight:1,opacity:.5,fillColor:'#8899aa',fillOpacity:.10}}).addTo(map);
-const saleLayer = L.geoJSON(SALE,{
+saleLayer = L.geoJSON(SALE,{
   style:{color:'#35E08A',weight:2.5,fillColor:'#17845A',fillOpacity:.5},
   onEachFeature:(f,l)=>{
-    const p=f.properties, c=l.getBounds().getCenter();
+    const p=f.properties;
     l.bindPopup(`<b>Îlot ${p.ilot} — Lot ${p.lot}</b><br>Superficie : ${p.sup} m² · 50.000 FCFA/m²`);
     l.bindTooltip(String(p.lot),{permanent:true,direction:'center',className:'lotlbl'});
     layers[p.lot]=l;
   }
 }).addTo(map);
 map.fitBounds(saleLayer.getBounds().pad(0.4));
+// Cadre géographique : impossible de sortir (rebond souple) + zoom mini = vue large
+var CADRE = L.latLngBounds([[4.90,-4.35],[5.95,-2.85]]);
+map.setMaxBounds(CADRE);
+map.setMinZoom(map.getBoundsZoom(CADRE));
+// Point rouge du site quand on dézoome (les lots sont alors invisibles)
+var SITE = saleLayer.getBounds().getCenter();
+redDot = L.circleMarker(SITE,{radius:9,color:'#ffffff',weight:3,fillColor:'#E11414',fillOpacity:1,className:'sitedot'})
+  .bindTooltip('Lotissement Harmonie 2',{permanent:true,direction:'top',offset:[0,-10],className:'sitelbl'})
+  .bindPopup('<b>Lotissement Harmonie 2</b><br>Zoomez pour voir les 17 lots disponibles.');
+var SEUIL_POINT=13;
+function syncVue(){
+  if(map.getZoom()<SEUIL_POINT){
+    if(map.hasLayer(saleLayer))map.removeLayer(saleLayer);
+    if(!map.hasLayer(redDot))redDot.addTo(map);
+  }else{
+    if(map.hasLayer(redDot))map.removeLayer(redDot);
+    if(!map.hasLayer(saleLayer))saleLayer.addTo(map);
+  }
+}
+map.on('zoomend',syncVue); syncVue();
 map.on('click',()=>map.scrollWheelZoom.enable());
 }catch(e){document.getElementById('map').innerHTML='<p style="padding:40px;text-align:center;color:#66746e">Carte indisponible — consultez l\'itinéraire Google Maps.</p>';}
 
