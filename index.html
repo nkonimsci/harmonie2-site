@@ -795,6 +795,16 @@ section.pad{padding:88px 0}
 .lotlbl{background:transparent;border:none;box-shadow:none;color:#fff;font-weight:700;font-size:11px;text-shadow:0 0 4px #000}
 .sitelbl{background:rgba(20,24,22,.85);border:none;box-shadow:0 2px 8px rgba(0,0,0,.4);color:#fff;font-weight:800;font-size:12px;padding:3px 9px;border-radius:20px}
 .sitelbl::before{border-top-color:rgba(20,24,22,.85)}
+/* Bouton sélecteur de fonds : icône « calques » sur pastille sombre */
+.leaflet-control-layers{border-radius:9px}
+.leaflet-control-layers:not(.leaflet-control-layers-expanded){background:transparent;border:none;box-shadow:none}
+.leaflet-control-layers-toggle{width:40px;height:40px;background-color:#20241f;border-radius:9px;box-shadow:0 1px 6px rgba(0,0,0,.4);background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polygon points='12 2 2 7 12 12 22 7 12 2'/><polyline points='2 17 12 22 22 17'/><polyline points='2 12 12 17 22 12'/></svg>");background-size:23px 23px;background-position:center;background-repeat:no-repeat}
+/* Étiquettes de repères géographiques */
+.leaflet-tooltip.rep{background:transparent;border:none;box-shadow:none;padding:0;white-space:nowrap;font-family:system-ui,Segoe UI,Roboto,sans-serif}
+.leaflet-tooltip.rep::before{display:none}
+.leaflet-tooltip.rep-route{color:#fff;background:rgba(178,58,42,.94);font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;padding:3px 10px;border-radius:13px;box-shadow:0 1px 6px rgba(0,0,0,.4)}
+.rep-canal{color:#12689e;font-style:italic;font-weight:700;font-size:12.5px;letter-spacing:.06em;text-shadow:0 0 3px #fff,0 0 6px #fff}
+.rep-ocean{color:#2c6f8c;font-family:'Fraunces',Georgia,serif;font-style:italic;font-weight:600;font-size:21px;letter-spacing:.16em;text-shadow:0 0 6px #fff,0 0 12px #fff;opacity:.92}
 .leaflet-popup-content{font-family:'Figtree',sans-serif;font-size:.9rem;line-height:1.55}
 
 /* Lots */
@@ -1034,23 +1044,41 @@ saleLayer = L.geoJSON(SALE,{
   }
 }).addTo(map);
 map.fitBounds(saleLayer.getBounds().pad(0.4));
-// Cadre géographique : impossible de sortir (rebond souple) + zoom mini = vue large
+// Zoom mini = vue large côtière (comme la capture)
 var CADRE = L.latLngBounds([[4.90,-4.35],[5.95,-2.85]]);
-map.setMaxBounds(CADRE);
 map.setMinZoom(map.getBoundsZoom(CADRE));
-// Point rouge du site quand on dézoome (les lots sont alors invisibles)
 var SITE = saleLayer.getBounds().getCenter();
+// Le site doit rester visible QUEL QUE SOIT le zoom : le cadre de navigation
+// (maxBounds) est recalculé autour du site selon la taille du viewport, avec
+// rebond souple — impossible de faire sortir le site de la carte.
+function contraindreSite(){
+  var v=map.getBounds(), dLat=v.getNorth()-v.getSouth(), dLng=v.getEast()-v.getWest();
+  map.setMaxBounds(L.latLngBounds([SITE.lat-dLat,SITE.lng-dLng],[SITE.lat+dLat,SITE.lng+dLng]));
+}
+map.on('zoomend',contraindreSite); contraindreSite();
+// Point rouge du site quand on dézoome (les lots sont alors invisibles)
 redDot = L.circleMarker(SITE,{radius:9,color:'#ffffff',weight:3,fillColor:'#E11414',fillOpacity:1,className:'sitedot'})
   .bindTooltip('Lotissement Harmonie 2',{permanent:true,direction:'top',offset:[0,-10],className:'sitelbl'})
   .bindPopup('<b>Lotissement Harmonie 2</b><br>Zoomez pour voir les 17 lots disponibles.');
+// Repères géographiques (positions ajustables) — visibles avec les lots
+var REPERES=[
+  {t:'Autoroute Grand-Bassam – Assinie', ll:[5.1742,-3.5045], c:'rep-route'},
+  {t:'Canal', ll:[5.1700,-3.5045], c:'rep-canal'},
+  {t:'Océan Atlantique', ll:[5.1300,-3.5300], c:'rep-ocean'}
+];
+var reperes=L.layerGroup(REPERES.map(function(r){
+  return L.tooltip({permanent:true,direction:'center',className:'rep '+r.c,interactive:false}).setLatLng(r.ll).setContent(r.t);
+}));
 var SEUIL_POINT=13;
 function syncVue(){
   if(map.getZoom()<SEUIL_POINT){
     if(map.hasLayer(saleLayer))map.removeLayer(saleLayer);
+    if(map.hasLayer(reperes))map.removeLayer(reperes);
     if(!map.hasLayer(redDot))redDot.addTo(map);
   }else{
     if(map.hasLayer(redDot))map.removeLayer(redDot);
     if(!map.hasLayer(saleLayer))saleLayer.addTo(map);
+    if(!map.hasLayer(reperes))reperes.addTo(map);
   }
 }
 map.on('zoomend',syncVue); syncVue();
