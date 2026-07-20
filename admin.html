@@ -109,6 +109,7 @@ h3{color:var(--vert);margin:4px 0 12px}
     <button data-tab="paiements" onclick="showTab('paiements',this)">Paiements</button>
     <button data-tab="lots" onclick="showTab('lots',this)">Parcelles</button>
     <button data-tab="prospects" onclick="showTab('prospects',this)">Prospects</button>
+    <button data-tab="audience" onclick="showTab('audience',this)">Audience</button>
   </nav>
 
   <div id="tab-suivi" class="card">
@@ -159,6 +160,24 @@ h3{color:var(--vert);margin:4px 0 12px}
   <div id="tab-prospects" class="card hide">
     <h3>Demandes reçues via le site</h3>
     <div class="tblwrap"><table id="tblProspects"></table></div>
+  </div>
+
+  <div id="tab-audience" class="card hide">
+    <h3>Audience du site — 30 derniers jours</h3>
+    <div class="kpis" id="audKpis"></div>
+    <h3 style="margin-top:18px">Pages vues par jour</h3>
+    <div id="audChart" style="overflow-x:auto"></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:18px">
+      <div>
+        <h3>Provenance des visiteurs</h3>
+        <div class="tblwrap" style="max-height:300px"><table id="tblRef"></table></div>
+      </div>
+      <div>
+        <h3>Appareils</h3>
+        <div class="tblwrap" style="max-height:300px"><table id="tblEcran"></table></div>
+      </div>
+    </div>
+    <p class="note">Mesure interne hébergée dans notre propre base (aucun service tiers, aucun cookie, aucune donnée personnelle). « Visites » = sessions de navigation ; « pages vues » = chargements de page.</p>
   </div>
 </div>
 </main>
@@ -244,12 +263,14 @@ async function openDash(){
   await refresh();
 }
 async function refresh(){
-  const [lots,ventes,paiements,suivi,prospects]=await Promise.all([
+  const d30=new Date(Date.now()-30*864e5).toISOString();
+  const [lots,ventes,paiements,suivi,prospects,visites]=await Promise.all([
     supa.from('lots').select('numero,ilot,statut,superficie_m2,prix_fcfa').order('numero'),
     supa.from('ventes').select('*').order('numero_lot'),
     supa.from('paiements').select('*').order('date_paiement',{ascending:false}),
     supa.from('suivi_ventes').select('*'),
-    supa.from('prospects').select('*').order('created_at',{ascending:false})
+    supa.from('prospects').select('*').order('created_at',{ascending:false}),
+    supa.from('visites').select('ts,page,referrer,ecran,nouvelle_visite').gte('ts',d30).order('ts',{ascending:false}).limit(20000)
   ]);
   if(lots.error){alert('Accès refusé — session 2FA requise ('+lots.error.message+')');return;}
   renderKpis(lots.data,suivi.data||[]);
@@ -258,7 +279,50 @@ async function refresh(){
   renderPaiements(paiements.data||[],ventes.data||[]);
   renderSuivi(suivi.data||[]);
   renderProspects(prospects.data||[]);
+  renderAudience(visites.data||[]);
   fillSelects(lots.data,ventes.data||[]);
+}
+function renderAudience(rows){
+  const today=new Date();today.setHours(0,0,0,0);
+  const pv=rows.length;
+  const vis=rows.filter(r=>r.nouvelle_visite).length;
+  const pvToday=rows.filter(r=>new Date(r.ts)>=today).length;
+  const mob=rows.filter(r=>r.ecran==='mobile').length;
+  const pctMob=pv?Math.round(100*mob/pv):0;
+  $('audKpis').innerHTML=
+    '<div class="kpi"><div class="n">'+fmt(pv)+'</div><div class="l">pages vues (30 j)</div></div>'+
+    '<div class="kpi"><div class="n">'+fmt(vis)+'</div><div class="l">visites (30 j)</div></div>'+
+    '<div class="kpi"><div class="n">'+fmt(pvToday)+'</div><div class="l">pages vues aujourd’hui</div></div>'+
+    '<div class="kpi"><div class="n">'+pctMob+'%</div><div class="l">visiteurs sur mobile</div></div>';
+  // ---- graphique barres 30 jours (SVG, aucune lib) ----
+  const days=[],counts={},vcounts={};
+  for(let i=29;i>=0;i--){const d=new Date(today.getTime()-i*864e5);const k=d.toISOString().slice(0,10);days.push(k);counts[k]=0;vcounts[k]=0;}
+  rows.forEach(r=>{const k=new Date(r.ts).toISOString().slice(0,10);if(k in counts){counts[k]++;if(r.nouvelle_visite)vcounts[k]++;}});
+  const max=Math.max(1,...days.map(k=>counts[k]));
+  const W=900,H=190,bw=W/30;
+  let svg='<svg viewBox="0 0 '+W+' '+(H+30)+'" style="width:100%;min-width:640px;height:auto" font-family="system-ui" font-size="10">';
+  days.forEach((k,i)=>{
+    const h=Math.round(counts[k]/max*(H-12)),hv=Math.round(vcounts[k]/max*(H-12));
+    const x=i*bw+3,y=H-h;
+    svg+='<rect x="'+x+'" y="'+y+'" width="'+(bw-6)+'" height="'+h+'" rx="3" fill="#CBDDD5"><title>'+k+' : '+counts[k]+' pages vues, '+vcounts[k]+' visites</title></rect>';
+    svg+='<rect x="'+x+'" y="'+(H-hv)+'" width="'+(bw-6)+'" height="'+hv+'" rx="3" fill="#17845A"><title>'+k+' : '+vcounts[k]+' visites</title></rect>';
+    if(counts[k]>0)svg+='<text x="'+(x+(bw-6)/2)+'" y="'+(y-3)+'" text-anchor="middle" fill="#5c6a63">'+counts[k]+'</text>';
+    if(i%5===0)svg+='<text x="'+(x+(bw-6)/2)+'" y="'+(H+14)+'" text-anchor="middle" fill="#77836c">'+k.slice(8)+'/'+k.slice(5,7)+'</text>';
+  });
+  svg+='<rect x="0" y="'+(H+18)+'" width="10" height="10" fill="#17845A" rx="2"/><text x="15" y="'+(H+27)+'" fill="#5c6a63">visites</text>';
+  svg+='<rect x="70" y="'+(H+18)+'" width="10" height="10" fill="#CBDDD5" rx="2"/><text x="85" y="'+(H+27)+'" fill="#5c6a63">pages vues</text></svg>';
+  $('audChart').innerHTML=svg;
+  // ---- provenance ----
+  const refs={};rows.forEach(r=>{const k=r.referrer||'Accès direct / favori';refs[k]=(refs[k]||0)+1;});
+  const topRefs=Object.entries(refs).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  $('tblRef').innerHTML='<tr><th>Source</th><th>Pages vues</th></tr>'+
+    topRefs.map(([k,n])=>'<tr><td>'+k.replace(/[<>&]/g,'')+'</td><td>'+fmt(n)+'</td></tr>').join('');
+  if(topRefs.length===0)$('tblRef').innerHTML+='<tr><td colspan="2">Aucune donnée pour le moment.</td></tr>';
+  // ---- appareils ----
+  const ecr={};rows.forEach(r=>{const k=r.ecran==='mobile'?'📱 Mobile':'💻 Ordinateur';ecr[k]=(ecr[k]||0)+1;});
+  $('tblEcran').innerHTML='<tr><th>Appareil</th><th>Pages vues</th><th>%</th></tr>'+
+    Object.entries(ecr).sort((a,b)=>b[1]-a[1]).map(([k,n])=>'<tr><td>'+k+'</td><td>'+fmt(n)+'</td><td>'+(pv?Math.round(100*n/pv):0)+'%</td></tr>').join('');
+  if(pv===0)$('tblEcran').innerHTML+='<tr><td colspan="3">Aucune donnée pour le moment.</td></tr>';
 }
 function renderKpis(lots,suivi){
   const c=s=>lots.filter(l=>l.statut===s).length;

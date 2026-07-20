@@ -1145,6 +1145,20 @@ document.getElementById('prospectForm').addEventListener('submit',async function
   else{st.textContent="L'envoi a échoué — écrivez-nous à nkonimsci@gmail.com";}
   btn.disabled=false;
 });
+
+/* Mesure d'audience interne (première partie, zéro tiers, zéro cookie).
+   Enregistre uniquement : page, domaine référent, type d'écran, nouvelle visite.
+   Stocké dans notre propre base Supabase — aucune donnée personnelle. */
+try{
+  var h2nv=!sessionStorage.getItem('h2v');
+  if(h2nv){try{sessionStorage.setItem('h2v','1');}catch(_e){}}
+  var h2ref='';
+  try{if(document.referrer){var rh=new URL(document.referrer).hostname;if(rh&&rh!==location.hostname)h2ref=rh;}}catch(_e){}
+  fetch(SUPABASE_URL+'/rest/v1/visites',{method:'POST',
+    headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},
+    body:JSON.stringify({page:location.pathname||'/',referrer:h2ref||null,ecran:(window.innerWidth<768?'mobile':'ordinateur'),nouvelle_visite:h2nv})
+  }).catch(function(){});
+}catch(e){}
 </script>
 
 </body>
