@@ -1059,9 +1059,9 @@ saleLayer = L.geoJSON(SALE,{
   }
 }).addTo(map);
 var SITE = saleLayer.getBounds().getCenter();
-// Vue PAR DÉFAUT : régionale (fond OSM + point rouge). Le détail (plan +
-// satellite) apparaît en zoomant.
-map.setView(SITE, 12);
+// Vue PAR DÉFAUT : détail (satellite + plan de morcellement + étiquettes).
+// Dézoomer sous SEUIL_PLAN repasse en fond OSM + point rouge.
+map.setView(SITE, 16);
 // L'ajout initial du fond OSM est différé par Leaflet jusqu'au 1er setView ;
 // son événement baselayerchange arrive après notre garde → on annule ce faux
 // « choix manuel » ici pour que la bascule auto fonctionne.
