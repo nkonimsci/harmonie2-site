@@ -1034,9 +1034,20 @@ const fmt = n => n.toLocaleString('fr-FR');
 let map=null, layers={}, saleLayer=null, redDot=null;
 try{
 map = L.map('map', {scrollWheelZoom:false, maxBoundsViscosity:0.5, bounceAtZoomLimits:true});
-var fondEsri = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:17,attribution:'Esri World Imagery'}).addTo(map);
-var fondOsm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'});
-L.control.layers({'Satellite (Esri)':fondEsri,'OSM standard':fondOsm},null,{position:'topright'}).addTo(map);
+var fondEsri = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:17,attribution:'Esri World Imagery'});
+var fondOsm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(map);
+L.control.layers({'OSM standard':fondOsm,'Satellite (Esri)':fondEsri},null,{position:'topright'}).addTo(map);
+// Bascule automatique du fond : OSM en vue régionale, satellite dès le zoom
+// de détail (SEUIL_PLAN). Respecte un choix manuel de l'internaute.
+var SEUIL_PLAN=15, autoSwitching=false, fondManuel=false;
+map.on('baselayerchange',function(){ if(!autoSwitching) fondManuel=true; });
+function autoFond(z){
+  if(fondManuel) return;
+  autoSwitching=true;
+  if(z>=SEUIL_PLAN){ if(!map.hasLayer(fondEsri))map.addLayer(fondEsri); if(map.hasLayer(fondOsm))map.removeLayer(fondOsm); }
+  else { if(!map.hasLayer(fondOsm))map.addLayer(fondOsm); if(map.hasLayer(fondEsri))map.removeLayer(fondEsri); }
+  autoSwitching=false;
+}
 var ctxLayer = L.geoJSON(CTX,{style:{color:'#ffffff',weight:1,opacity:.5,fillColor:'#8899aa',fillOpacity:.10}}).addTo(map);
 saleLayer = L.geoJSON(SALE,{
   style:{color:'#35E08A',weight:2.5,fillColor:'#17845A',fillOpacity:.5},
@@ -1047,11 +1058,17 @@ saleLayer = L.geoJSON(SALE,{
     layers[p.lot]=l;
   }
 }).addTo(map);
-map.fitBounds(saleLayer.getBounds().pad(0.4));
+var SITE = saleLayer.getBounds().getCenter();
+// Vue PAR DÉFAUT : régionale (fond OSM + point rouge). Le détail (plan +
+// satellite) apparaît en zoomant.
+map.setView(SITE, 12);
+// L'ajout initial du fond OSM est différé par Leaflet jusqu'au 1er setView ;
+// son événement baselayerchange arrive après notre garde → on annule ce faux
+// « choix manuel » ici pour que la bascule auto fonctionne.
+fondManuel=false;
 // Zoom mini = vue large côtière (comme la capture)
 var CADRE = L.latLngBounds([[4.90,-4.35],[5.95,-2.85]]);
 map.setMinZoom(map.getBoundsZoom(CADRE));
-var SITE = saleLayer.getBounds().getCenter();
 // Zone de navigation = boîte du site (lotissement) ÉLARGIE DE ~3 KM.
 // On peut paner librement dans toute cette étendue à n'importe quel zoom,
 // jusqu'à 3 km au-delà du site ; rebond souple aux bords (maxBoundsViscosity).
@@ -1090,21 +1107,23 @@ var txtRoute=labelCourbe(GEO_AUTOROUTE,'AUTOROUTE GRAND-BASSAM – ASSINIE','rpa
 var txtCanal=labelCourbe(GEO_CANAL,'Canal d’Assinie','rpath-canal','rp_canal');
 // Océan : étiquette de zone (mer), pas de ligne à suivre
 var ttOcean=L.tooltip({permanent:true,direction:'center',className:'rep rep-ocean',interactive:false}).setLatLng([5.1300,-3.5300]).setContent('Océan Atlantique');
-var SEUIL_POINT=13;
 function syncVue(){
   var z=map.getZoom();
-  if(z<SEUIL_POINT){
+  autoFond(z);
+  // Même seuil que le fond satellite : sous SEUIL_PLAN = point rouge (vue
+  // régionale, fond OSM) ; à partir de SEUIL_PLAN = plan de morcellement.
+  if(z<SEUIL_PLAN){
     if(map.hasLayer(saleLayer))map.removeLayer(saleLayer);
     if(!map.hasLayer(redDot))redDot.addTo(map);
   }else{
     if(map.hasLayer(redDot))map.removeLayer(redDot);
     if(!map.hasLayer(saleLayer))saleLayer.addTo(map);
   }
-  // Le texte courbé apparaît quand la ligne est assez longue à l'écran pour
-  // l'accueillir sans gêner le site : canal ≥14, autoroute (texte long) ≥16.
-  txtCanal.style.display = (z>=14)?'':'none';
+  // Étiquettes courbées : en vue détail (canal dès le plan, autoroute ≥16 car
+  // texte plus long). Océan : étiquette de zone en vue régionale.
+  txtCanal.style.display = (z>=SEUIL_PLAN)?'':'none';
   txtRoute.style.display = (z>=16)?'':'none';
-  var ocean = (z>=SEUIL_POINT && z<=15);
+  var ocean = (z>=11 && z<SEUIL_PLAN);
   if(ocean && !map.hasLayer(ttOcean)) ttOcean.addTo(map);
   else if(!ocean && map.hasLayer(ttOcean)) map.removeLayer(ttOcean);
 }
