@@ -806,9 +806,9 @@ section.pad{padding:88px 0}
 .rep-canal{color:#12689e;font-style:italic;font-weight:700;font-size:12.5px;letter-spacing:.06em;text-shadow:0 0 3px #fff,0 0 6px #fff}
 .rep-ocean{color:#2c6f8c;font-family:'Fraunces',Georgia,serif;font-style:italic;font-weight:600;font-size:21px;letter-spacing:.16em;text-shadow:0 0 6px #fff,0 0 12px #fff;opacity:.92}
 /* Texte courbé épousant la géométrie réelle (SVG textPath) */
-.rpath{paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round;font-family:system-ui,Segoe UI,Roboto,sans-serif;pointer-events:none;-webkit-user-select:none;user-select:none}
-.rpath-route{fill:#8a2b1c;font-weight:800;font-size:11px;letter-spacing:3px}
-.rpath-canal{fill:#0f6fb0;font-style:italic;font-weight:700;font-size:12px;letter-spacing:1px}
+.rpath{paint-order:stroke;stroke:#fff;stroke-width:.28em;stroke-linejoin:round;font-family:system-ui,Segoe UI,Roboto,sans-serif;pointer-events:none;-webkit-user-select:none;user-select:none}
+.rpath-route{fill:#8a2b1c;font-weight:800;font-size:11px;letter-spacing:.08em}
+.rpath-canal{fill:#0f6fb0;font-style:italic;font-weight:700;font-size:12px;letter-spacing:.09em}
 .leaflet-popup-content{font-family:'Figtree',sans-serif;font-size:.9rem;line-height:1.55}
 
 /* Lots */
@@ -1116,29 +1116,41 @@ redDot = L.circleMarker(SITE,{radius:9,color:'#ffffff',weight:3,fillColor:'#E114
 // --- Repères LINÉAIRES : texte courbé épousant la géométrie réelle (OSM) ---
 // Tracés réels récupérés depuis OpenStreetMap : autoroute (way 1384103073,
 // carrossable côté site) et Canal d'Assinie (way 136485730).
-var GEO_AUTOROUTE=[[5.176863,-3.515126],[5.176767,-3.513399],[5.176794,-3.512106],[5.176959,-3.510894],[5.17744,-3.508287],[5.177948,-3.505406],[5.178001,-3.504188],[5.178007,-3.503636],[5.177985,-3.502992],[5.177894,-3.50245],[5.17775,-3.501817]];
-var GEO_CANAL=[[5.174997,-3.514984],[5.175534,-3.5119],[5.176105,-3.508782],[5.176328,-3.506562],[5.176195,-3.503718]];
+var GEO_AUTOROUTE=[[5.1779,-3.524503],[5.177665,-3.521907],[5.177469,-3.520182],[5.177288,-3.51861],[5.177253,-3.518305],[5.176952,-3.515993],[5.176863,-3.515126],[5.176767,-3.513399],[5.176794,-3.512106],[5.176959,-3.510894],[5.17744,-3.508287],[5.177948,-3.505406],[5.178001,-3.504188],[5.178007,-3.503636],[5.177985,-3.502992],[5.177894,-3.50245],[5.17775,-3.501817],[5.176831,-3.49863],[5.17596,-3.495476],[5.175763,-3.494468],[5.175704,-3.493792],[5.175661,-3.493051]];
+var GEO_CANAL=[[5.173747,-3.522135],[5.174145,-3.520119],[5.174997,-3.514984],[5.175534,-3.5119],[5.176105,-3.508782],[5.176328,-3.506562],[5.176195,-3.503718],[5.175581,-3.498394],[5.174924,-3.494047]];
 var SVGNS='http://www.w3.org/2000/svg', XLINK='http://www.w3.org/1999/xlink';
-function labelCourbe(coords,texte,cls,id){
+function labelCourbe(coords,texte,cls,id,base,dy){
   var pl=L.polyline(coords,{renderer:L.svg(),color:'#000',opacity:0,weight:14,interactive:false}).addTo(map);
   pl._path.setAttribute('id',id);
   var txt=document.createElementNS(SVGNS,'text');
-  txt.setAttribute('class','rpath '+cls); txt.setAttribute('dy',4); txt.style.display='none';
+  txt.setAttribute('class','rpath '+cls); txt.setAttribute('dy',dy); txt.style.display='none';
   var tp=document.createElementNS(SVGNS,'textPath');
   tp.setAttributeNS(XLINK,'xlink:href','#'+id); tp.setAttribute('href','#'+id);
   tp.setAttribute('startOffset','50%'); tp.setAttribute('text-anchor','middle');
   tp.textContent=texte; txt.appendChild(tp);
   pl._path.parentNode.appendChild(txt);
-  return txt;
+  return {txt:txt, coords:coords, base:base};
 }
-var txtRoute=labelCourbe(GEO_AUTOROUTE,'AUTOROUTE GRAND-BASSAM – ASSINIE','rpath-route','rp_route');
-var txtCanal=labelCourbe(GEO_CANAL,'Canal d’Assinie','rpath-canal','rp_canal');
+// base = taille de police « pleine » (px) ; dy = décalage vertical pour
+// séparer le libellé de la route (au-dessus) de celui du canal (en dessous).
+var lblRoute=labelCourbe(GEO_AUTOROUTE,'AUTOROUTE GRAND-BASSAM – ASSINIE','rpath-route','rp_route',11,-3);
+var lblCanal=labelCourbe(GEO_CANAL,'Canal d’Assinie','rpath-canal','rp_canal',12,12);
+var txtRoute=lblRoute.txt, txtCanal=lblCanal.txt;
+// Longueur ÉCRAN (px) du rail à l'échelle courante — sert à dimensionner le
+// texte pour qu'il tienne sur la portion visible tout en épousant la courbe.
+function railPx(coords){ var d=0,prev=null; for(var i=0;i<coords.length;i++){ var p=map.latLngToLayerPoint(L.latLng(coords[i][0],coords[i][1])); if(prev)d+=p.distanceTo(prev); prev=p; } return d; }
+// Ajuste la police : le libellé courbé reste posé sur l'objet et occupe au
+// plus 90 % du tracé (jamais plus gros que la taille pleine, jamais < 6 px).
+function fitLabel(lbl){
+  var el=lbl.txt; el.style.display='';
+  el.style.fontSize=lbl.base+'px';
+  var tp=el.querySelector('textPath');
+  var tl=(tp&&tp.getComputedTextLength)?tp.getComputedTextLength():(el.getComputedTextLength?el.getComputedTextLength():0);
+  var avail=railPx(lbl.coords)*0.96;
+  if(tl>0){ var fs=Math.max(7, Math.min(lbl.base, lbl.base*avail/tl)); el.style.fontSize=fs.toFixed(1)+'px'; }
+}
 // Océan : étiquette de zone (mer), pas de ligne à suivre
 var ttOcean=L.tooltip({permanent:true,direction:'center',className:'rep rep-ocean',interactive:false}).setLatLng([5.1300,-3.5300]).setContent('Océan Atlantique');
-// Étiquettes « pastille » pour la VUE RÉGIONALE (le texte courbé ne tient pas
-// sur des tracés trop courts à faible zoom) — posées sur l'autoroute et le canal.
-var ttRouteReg=L.tooltip({permanent:true,direction:'right',offset:[10,0],className:'rep rep-route',interactive:false}).setLatLng([5.17744,-3.508287]).setContent('Autoroute Grand-Bassam – Assinie');
-var ttCanalReg=L.tooltip({permanent:true,direction:'bottom',offset:[0,8],className:'rep rep-canal',interactive:false}).setLatLng([5.176105,-3.508782]).setContent("Canal d'Assinie");
 function tog(layer,show){ if(show){ if(!map.hasLayer(layer))layer.addTo(map); } else if(map.hasLayer(layer))map.removeLayer(layer); }
 function syncVue(){
   var z=map.getZoom();
@@ -1152,13 +1164,11 @@ function syncVue(){
     if(map.hasLayer(redDot))map.removeLayer(redDot);
     if(!map.hasLayer(saleLayer))saleLayer.addTo(map);
   }
-  // Étiquettes courbées : en vue détail (canal dès le plan, autoroute ≥16 car
-  // texte plus long). Océan : étiquette de zone en vue régionale.
-  // Texte courbé en vue détail, pastilles en vue régionale (sans rupture).
-  txtCanal.style.display = (z>=SEUIL_PLAN)?'':'none';
-  txtRoute.style.display = (z>=16)?'':'none';
-  tog(ttCanalReg, z>=12 && z<SEUIL_PLAN);
-  tog(ttRouteReg, z>=12 && z<16);
+  // Libellés courbés autoroute + canal : posés sur la géométrie réelle et
+  // épousant la courbe, à toutes les échelles utiles (dès la vue régionale).
+  // La police s'ajuste pour tenir sur la portion visible du tracé.
+  if(z>=12){ fitLabel(lblRoute); fitLabel(lblCanal); }
+  else { txtRoute.style.display='none'; txtCanal.style.display='none'; }
   tog(ttOcean, z>=11 && z<SEUIL_PLAN);
 }
 map.on('zoomend',syncVue); syncVue();
