@@ -1087,9 +1087,9 @@ saleLayer = L.geoJSON(SALE,{
   }
 }).addTo(map);
 var SITE = saleLayer.getBounds().getCenter();
-// Vue PAR DÉFAUT : détail (satellite + plan de morcellement + étiquettes).
-// Dézoomer sous SEUIL_PLAN repasse en fond OSM + point rouge.
-map.setView(SITE, 16);
+// Vue PAR DÉFAUT : régionale (fond OSM + point rouge, Assouindé visible).
+// Zoomer au-delà de SEUIL_PLAN bascule sur satellite + plan de morcellement.
+map.setView(SITE, 13);
 // L'ajout initial du fond OSM est différé par Leaflet jusqu'au 1er setView ;
 // son événement baselayerchange arrive après notre garde → on annule ce faux
 // « choix manuel » ici pour que la bascule auto fonctionne.
@@ -1135,6 +1135,11 @@ var txtRoute=labelCourbe(GEO_AUTOROUTE,'AUTOROUTE GRAND-BASSAM – ASSINIE','rpa
 var txtCanal=labelCourbe(GEO_CANAL,'Canal d’Assinie','rpath-canal','rp_canal');
 // Océan : étiquette de zone (mer), pas de ligne à suivre
 var ttOcean=L.tooltip({permanent:true,direction:'center',className:'rep rep-ocean',interactive:false}).setLatLng([5.1300,-3.5300]).setContent('Océan Atlantique');
+// Étiquettes « pastille » pour la VUE RÉGIONALE (le texte courbé ne tient pas
+// sur des tracés trop courts à faible zoom) — posées sur l'autoroute et le canal.
+var ttRouteReg=L.tooltip({permanent:true,direction:'right',offset:[10,0],className:'rep rep-route',interactive:false}).setLatLng([5.17744,-3.508287]).setContent('Autoroute Grand-Bassam – Assinie');
+var ttCanalReg=L.tooltip({permanent:true,direction:'bottom',offset:[0,8],className:'rep rep-canal',interactive:false}).setLatLng([5.176105,-3.508782]).setContent("Canal d'Assinie");
+function tog(layer,show){ if(show){ if(!map.hasLayer(layer))layer.addTo(map); } else if(map.hasLayer(layer))map.removeLayer(layer); }
 function syncVue(){
   var z=map.getZoom();
   autoFond(z);
@@ -1149,11 +1154,12 @@ function syncVue(){
   }
   // Étiquettes courbées : en vue détail (canal dès le plan, autoroute ≥16 car
   // texte plus long). Océan : étiquette de zone en vue régionale.
+  // Texte courbé en vue détail, pastilles en vue régionale (sans rupture).
   txtCanal.style.display = (z>=SEUIL_PLAN)?'':'none';
   txtRoute.style.display = (z>=16)?'':'none';
-  var ocean = (z>=11 && z<SEUIL_PLAN);
-  if(ocean && !map.hasLayer(ttOcean)) ttOcean.addTo(map);
-  else if(!ocean && map.hasLayer(ttOcean)) map.removeLayer(ttOcean);
+  tog(ttCanalReg, z>=12 && z<SEUIL_PLAN);
+  tog(ttRouteReg, z>=12 && z<16);
+  tog(ttOcean, z>=11 && z<SEUIL_PLAN);
 }
 map.on('zoomend',syncVue); syncVue();
 map.on('click',()=>map.scrollWheelZoom.enable());
