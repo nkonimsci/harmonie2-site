@@ -1081,7 +1081,7 @@ saleLayer = L.geoJSON(SALE,{
   style:{color:'#35E08A',weight:2.5,fillColor:'#17845A',fillOpacity:.5},
   onEachFeature:(f,l)=>{
     const p=f.properties;
-    l.bindPopup(`<b>Îlot ${p.ilot} — Lot ${p.lot}</b><br>Superficie : ${p.sup} m² · 55.000 FCFA/m²`);
+    l.bindPopup(`<b>Îlot ${p.ilot} — Lot ${p.lot}</b><br>Superficie : ${p.sup} m²`);
     l.bindTooltip(String(p.lot),{permanent:true,direction:'center',className:'lotlbl'});
     layers[p.lot]=l;
   }
@@ -1195,7 +1195,7 @@ SALE.features
       <a class="iti" href="https://maps.app.goo.gl/Y4rxe8rKrmyHWodm7" target="_blank" rel="noopener">Itinéraire ↗</a>
       <div class="ilot">Îlot ${p.ilot}</div>
       <div class="lotno">Lot ${p.lot}</div>
-      <div class="sup">${p.sup} m² · 55.000 FCFA/m²</div>
+      <div class="sup">${p.sup} m²</div>
       
       `;
     d.addEventListener('click',e=>{
