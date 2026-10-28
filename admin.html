@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>Administration — Lotissement Harmonie 2 · SCI NKONIM</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Ccircle cx=%2732%27 cy=%2732%27 r=%2730%27 fill=%27%2317443A%27 stroke=%27%23C9A227%27 stroke-width=%273%27/%3E%3Ctext x=%2732%27 y=%2742%27 font-family=%27Georgia%27 font-size=%2726%27 font-weight=%27bold%27 fill=%27%23C9A227%27 text-anchor=%27middle%27%3EH2%3C/text%3E%3C/svg%3E">
+<title>Administration · NKONIM</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231B2A5B'/%3E%3Cpath d='M46 46H18V18H46V38H28V28H38V33' fill='none' stroke='%23D6A62B' stroke-width='5' stroke-linejoin='miter'/%3E%3C/svg%3E">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
-:root{--vert:#17443A;--vert2:#17845A;--or:#C9A227;--fond:#F7F4EC;--bord:#DDD6C4}
+:root{--vert:#1B2A5B;--vert2:#2F4BA0;--or:#D6A62B;--fond:#F7F4EC;--bord:#DDD6C4}
 *{box-sizing:border-box}
 body{margin:0;font-family:system-ui,Segoe UI,Roboto,sans-serif;background:var(--fond);color:#22302b}
 header{background:var(--vert);color:#fff;padding:14px 22px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
@@ -42,9 +42,9 @@ th,td{padding:8px 9px;border-bottom:1px solid #EDE8DA;text-align:left;vertical-a
 th{background:var(--fond);font-size:.75rem;text-transform:uppercase;letter-spacing:.04em;color:#5c6a63;position:sticky;top:0}
 .tblwrap{overflow-x:auto;max-height:62vh;overflow-y:auto;border:1px solid var(--bord);border-radius:10px}
 .badge{display:inline-block;padding:2px 9px;border-radius:12px;font-size:.72rem;font-weight:700}
-.b-dispo{background:#DFF3E7;color:#17845A}.b-vendu{background:#FBE2E2;color:#a33}
+.b-dispo{background:#E1E6F7;color:#2F4BA0}.b-vendu{background:#FBE2E2;color:#a33}
 .b-nkonim{background:#DDEEFB;color:#1a6aa8}.b-teya{background:#E8E8E8;color:#555}
-.b-solde{background:#DFF3E7;color:#17845A}.b-partiel{background:#FFF3D6;color:#9a7a10}.b-aucun{background:#FBE2E2;color:#a33}
+.b-solde{background:#E1E6F7;color:#2F4BA0}.b-partiel{background:#FFF3D6;color:#9a7a10}.b-aucun{background:#FBE2E2;color:#a33}
 .kpis{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}
 .kpi{flex:1;min-width:150px;background:#fff;border:1px solid var(--bord);border-radius:10px;padding:14px}
 .kpi .n{font-size:1.35rem;font-weight:700;color:var(--vert)}
@@ -57,7 +57,7 @@ h3{color:var(--vert);margin:4px 0 12px}
 </head>
 <body>
 <header>
-  <h1>ADMINISTRATION — LOTISSEMENT HARMONIE 2</h1>
+  <h1>ADMINISTRATION — NKONIM · HARMONIE 2</h1>
   <div><span class="who" id="who"></span> <button class="btn ghost hide" id="btnLogout" onclick="logout()">Déconnexion</button></div>
 </header>
 <main>
@@ -313,13 +313,13 @@ function renderAudience(rows){
   days.forEach((k,i)=>{
     const h=Math.round(counts[k]/max*(H-12)),hv=Math.round(vcounts[k]/max*(H-12));
     const x=i*bw+3,y=H-h;
-    svg+='<rect x="'+x+'" y="'+y+'" width="'+(bw-6)+'" height="'+h+'" rx="3" fill="#CBDDD5"><title>'+k+' : '+counts[k]+' pages vues, '+vcounts[k]+' visites</title></rect>';
-    svg+='<rect x="'+x+'" y="'+(H-hv)+'" width="'+(bw-6)+'" height="'+hv+'" rx="3" fill="#17845A"><title>'+k+' : '+vcounts[k]+' visites</title></rect>';
+    svg+='<rect x="'+x+'" y="'+y+'" width="'+(bw-6)+'" height="'+h+'" rx="3" fill="#C9D2EE"><title>'+k+' : '+counts[k]+' pages vues, '+vcounts[k]+' visites</title></rect>';
+    svg+='<rect x="'+x+'" y="'+(H-hv)+'" width="'+(bw-6)+'" height="'+hv+'" rx="3" fill="#2F4BA0"><title>'+k+' : '+vcounts[k]+' visites</title></rect>';
     if(counts[k]>0)svg+='<text x="'+(x+(bw-6)/2)+'" y="'+(y-3)+'" text-anchor="middle" fill="#5c6a63">'+counts[k]+'</text>';
     if(i%5===0)svg+='<text x="'+(x+(bw-6)/2)+'" y="'+(H+14)+'" text-anchor="middle" fill="#77836c">'+k.slice(8)+'/'+k.slice(5,7)+'</text>';
   });
-  svg+='<rect x="0" y="'+(H+18)+'" width="10" height="10" fill="#17845A" rx="2"/><text x="15" y="'+(H+27)+'" fill="#5c6a63">visites</text>';
-  svg+='<rect x="70" y="'+(H+18)+'" width="10" height="10" fill="#CBDDD5" rx="2"/><text x="85" y="'+(H+27)+'" fill="#5c6a63">pages vues</text></svg>';
+  svg+='<rect x="0" y="'+(H+18)+'" width="10" height="10" fill="#2F4BA0" rx="2"/><text x="15" y="'+(H+27)+'" fill="#5c6a63">visites</text>';
+  svg+='<rect x="70" y="'+(H+18)+'" width="10" height="10" fill="#C9D2EE" rx="2"/><text x="85" y="'+(H+27)+'" fill="#5c6a63">pages vues</text></svg>';
   $('audChart').innerHTML=svg;
   // ---- provenance ----
   const refs={};rows.forEach(r=>{const k=r.referrer||'Accès direct / favori';refs[k]=(refs[k]||0)+1;});
@@ -367,7 +367,7 @@ function renderMap(rows){
     if(!groups[key])groups[key]={lat:r.lat,lon:r.lon,n:0,ville:r.ville,pays:r.pays};groups[key].n++;});
   const g=Object.values(groups);
   g.forEach(z=>{
-    L.circleMarker([z.lat,z.lon],{radius:Math.min(6+z.n*2,24),color:'#C9A227',weight:2,fillColor:'#17845A',fillOpacity:.55})
+    L.circleMarker([z.lat,z.lon],{radius:Math.min(6+z.n*2,24),color:'#D6A62B',weight:2,fillColor:'#2F4BA0',fillOpacity:.55})
      .bindPopup('<b>'+((z.ville?z.ville+' · ':'')+paysNom(z.pays)+'</b><br>'+z.n+' page(s) vue(s)'))
      .addTo(window._audLayer);
   });
