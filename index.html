@@ -1077,9 +1077,9 @@ function autoFond(z){
   // else { if(!map.hasLayer(fondOsm))map.addLayer(fondOsm); if(map.hasLayer(fondEsri))map.removeLayer(fondEsri); }
   autoSwitching=false;
 }
-var ctxLayer = L.geoJSON(CTX,{style:{color:'#ffffff',weight:1,opacity:.5,fillColor:'#8899aa',fillOpacity:.10}}).addTo(map);
+var ctxLayer = L.geoJSON(CTX,{style:{color:'#8A6D12',weight:1.6,opacity:.95,fillColor:'#C9A227',fillOpacity:.14}}).addTo(map);
 saleLayer = L.geoJSON(SALE,{
-  style:{color:'#35E08A',weight:2.5,fillColor:'#17845A',fillOpacity:.5},
+  style:{color:'#0B5D3B',weight:3,opacity:1,fillColor:'#17845A',fillOpacity:.6},
   onEachFeature:(f,l)=>{
     const p=f.properties;
     l.bindPopup(`<b>Îlot ${p.ilot} — Lot ${p.lot}</b><br>Superficie : ${p.sup} m²`);
