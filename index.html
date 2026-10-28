@@ -1062,9 +1062,10 @@ const fmt = n => n.toLocaleString('fr-FR');
 let map=null, layers={}, saleLayer=null, redDot=null;
 try{
 map = L.map('map', {scrollWheelZoom:false, maxBoundsViscosity:0.5, bounceAtZoomLimits:true});
-var fondEsri = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:17,attribution:'Esri World Imagery'});
+// Fond satellite Esri désactivé (imagerie obsolète, ne reflète plus l'état actuel du site).
+// var fondEsri = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:17,attribution:'Esri World Imagery'});
 var fondOsm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(map);
-L.control.layers({'OSM standard':fondOsm,'Satellite (Esri)':fondEsri},null,{position:'topright'}).addTo(map);
+// L.control.layers({'OSM standard':fondOsm,'Satellite (Esri)':fondEsri},null,{position:'topright'}).addTo(map);
 // Bascule automatique du fond : OSM en vue régionale, satellite dès le zoom
 // de détail (SEUIL_PLAN). Respecte un choix manuel de l'internaute.
 var SEUIL_PLAN=15, autoSwitching=false, fondManuel=false;
@@ -1072,8 +1073,8 @@ map.on('baselayerchange',function(){ if(!autoSwitching) fondManuel=true; });
 function autoFond(z){
   if(fondManuel) return;
   autoSwitching=true;
-  if(z>=SEUIL_PLAN){ if(!map.hasLayer(fondEsri))map.addLayer(fondEsri); if(map.hasLayer(fondOsm))map.removeLayer(fondOsm); }
-  else { if(!map.hasLayer(fondOsm))map.addLayer(fondOsm); if(map.hasLayer(fondEsri))map.removeLayer(fondEsri); }
+  // if(z>=SEUIL_PLAN){ if(!map.hasLayer(fondEsri))map.addLayer(fondEsri); if(map.hasLayer(fondOsm))map.removeLayer(fondOsm); }
+  // else { if(!map.hasLayer(fondOsm))map.addLayer(fondOsm); if(map.hasLayer(fondEsri))map.removeLayer(fondEsri); }
   autoSwitching=false;
 }
 var ctxLayer = L.geoJSON(CTX,{style:{color:'#ffffff',weight:1,opacity:.5,fillColor:'#8899aa',fillOpacity:.10}}).addTo(map);
