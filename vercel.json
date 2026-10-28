@@ -1,5 +1,8 @@
 {
   "cleanUrls": true,
+  "crons": [
+    { "path": "/api/keepalive", "schedule": "0 7 * * 1,4" }
+  ],
   "redirects": [
     {
       "source": "/",
@@ -8,9 +11,9 @@
       "permanent": true
     },
     {
-      "source": "/:path*",
+      "source": "/((?!api/).*)",
       "has": [{ "type": "host", "value": "lotisharmonie2-assiniemafia.vercel.app" }],
-      "destination": "https://nkonimsci.net/:path*",
+      "destination": "https://nkonimsci.net/$1",
       "permanent": true
     }
   ]
