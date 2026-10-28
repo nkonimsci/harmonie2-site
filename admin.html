@@ -5,16 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>Administration · NKONIM</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231B2A5B'/%3E%3Ccircle cx='32' cy='32' r='25' fill='none' stroke='%23D6A62B' stroke-width='3.5' opacity='.55'/%3E%3Ccircle cx='32' cy='32' r='18' fill='none' stroke='%23D6A62B' stroke-width='3.5' opacity='.8'/%3E%3Ccircle cx='32' cy='32' r='11' fill='none' stroke='%23D6A62B' stroke-width='3.5'/%3E%3Cpath d='M26 35L32 28L38 35' fill='none' stroke='%23F5EFE0' stroke-width='3.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230B0907'/%3E%3Ccircle cx='32' cy='32' r='25' fill='none' stroke='%23D6A62B' stroke-width='3.5' opacity='.55'/%3E%3Ccircle cx='32' cy='32' r='18' fill='none' stroke='%23D6A62B' stroke-width='3.5' opacity='.8'/%3E%3Ccircle cx='32' cy='32' r='11' fill='none' stroke='%23D6A62B' stroke-width='3.5'/%3E%3Cpath d='M26 35L32 28L38 35' fill='none' stroke='%23F5EFE0' stroke-width='3.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
-:root{--vert:#1B2A5B;--vert2:#2F4BA0;--or:#D6A62B;--fond:#F7F4EC;--bord:#DDD6C4}
+:root{--vert:#14110D;--vert2:#8A6612;--or:#D6A62B;--fond:#F5F5F4;--bord:#DEDCD6}
 *{box-sizing:border-box}
 body{margin:0;font-family:system-ui,Segoe UI,Roboto,sans-serif;background:var(--fond);color:#22302b}
 header{background:var(--vert);color:#fff;padding:14px 22px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
-header h1{font-size:1.05rem;margin:0;letter-spacing:.03em}
+header h1{font-size:1.2rem;margin:0;letter-spacing:.03em}
 header .who{font-size:.8rem;opacity:.85}
 button{font:inherit;cursor:pointer}
 .btn{background:var(--vert2);color:#fff;border:0;border-radius:8px;padding:9px 16px}
@@ -24,7 +24,7 @@ button{font:inherit;cursor:pointer}
 main{max-width:1100px;margin:0 auto;padding:22px 16px 60px}
 .card{background:#fff;border:1px solid var(--bord);border-radius:12px;padding:22px;margin:0 auto 18px;box-shadow:0 4px 14px rgba(0,0,0,.04)}
 .auth{max-width:420px;margin-top:8vh}
-.auth h2{margin:0 0 4px;color:var(--vert)}
+.auth h2{margin:0 0 4px;color:var(--vert);font-size:1.45rem}
 .auth p{color:#5c6a63;font-size:.9rem}
 label{display:block;font-size:.8rem;font-weight:600;margin:12px 0 4px;color:#3c4a44}
 input,select,textarea{width:100%;padding:10px 11px;border:1px solid var(--bord);border-radius:8px;font:inherit;background:#fff}
@@ -38,13 +38,13 @@ nav.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
 nav.tabs button{border:1px solid var(--bord);background:#fff;border-radius:20px;padding:8px 16px;font-size:.88rem}
 nav.tabs button.on{background:var(--vert);color:#fff;border-color:var(--vert)}
 table{width:100%;border-collapse:collapse;font-size:.85rem;background:#fff}
-th,td{padding:8px 9px;border-bottom:1px solid #EDE8DA;text-align:left;vertical-align:top}
+th,td{padding:8px 9px;border-bottom:1px solid #EAE8E3;text-align:left;vertical-align:top}
 th{background:var(--fond);font-size:.75rem;text-transform:uppercase;letter-spacing:.04em;color:#5c6a63;position:sticky;top:0}
 .tblwrap{overflow-x:auto;max-height:62vh;overflow-y:auto;border:1px solid var(--bord);border-radius:10px}
 .badge{display:inline-block;padding:2px 9px;border-radius:12px;font-size:.72rem;font-weight:700}
-.b-dispo{background:#E1E6F7;color:#2F4BA0}.b-vendu{background:#FBE2E2;color:#a33}
+.b-dispo{background:#F3ECD8;color:#8A6612}.b-vendu{background:#FBE2E2;color:#a33}
 .b-nkonim{background:#DDEEFB;color:#1a6aa8}.b-teya{background:#E8E8E8;color:#555}
-.b-solde{background:#E1E6F7;color:#2F4BA0}.b-partiel{background:#FFF3D6;color:#9a7a10}.b-aucun{background:#FBE2E2;color:#a33}
+.b-solde{background:#F3ECD8;color:#8A6612}.b-partiel{background:#FFF3D6;color:#9a7a10}.b-aucun{background:#FBE2E2;color:#a33}
 .kpis{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}
 .kpi{flex:1;min-width:150px;background:#fff;border:1px solid var(--bord);border-radius:10px;padding:14px}
 .kpi .n{font-size:1.35rem;font-weight:700;color:var(--vert)}
@@ -52,12 +52,12 @@ th{background:var(--fond);font-size:.75rem;text-transform:uppercase;letter-spaci
 .formgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;align-items:end}
 .hide{display:none !important}
 h3{color:var(--vert);margin:4px 0 12px}
-.note{font-size:.78rem;color:#77836c;margin-top:8px}
+.note{font-size:.78rem;color:#5E5A52;margin-top:8px}
 </style>
 </head>
 <body>
 <header>
-  <h1>ADMINISTRATION — NKONIM · HARMONIE 2</h1>
+  <h1>ADMINISTRATION · NKONIM</h1>
   <div><span class="who" id="who"></span> <button class="btn ghost hide" id="btnLogout" onclick="logout()">Déconnexion</button></div>
 </header>
 <main>
@@ -74,7 +74,7 @@ h3{color:var(--vert);margin:4px 0 12px}
 
 <!-- SET PASSWORD (invitation) -->
 <div class="card auth hide" id="viewSetPwd">
-  <h2>Bienvenue — définissez votre mot de passe</h2>
+  <h2>Bienvenue, choisissez votre mot de passe</h2>
   <p>Choisissez un mot de passe robuste (12 caractères minimum recommandés, avec chiffres et symboles).</p>
   <label>Nouveau mot de passe<input type="password" id="pwd1" autocomplete="new-password"></label>
   <label>Confirmez le mot de passe<input type="password" id="pwd2" autocomplete="new-password"></label>
@@ -141,7 +141,7 @@ h3{color:var(--vert);margin:4px 0 12px}
   <div id="tab-paiements" class="card hide">
     <h3>Enregistrer un paiement</h3>
     <div class="formgrid">
-      <label>Vente (lot — acquéreur)<select id="pVente"></select></label>
+      <label>Vente (lot et acquéreur)<select id="pVente"></select></label>
       <label>Date<input id="pDate" type="date"></label>
       <label>Montant (FCFA)<input id="pMontant" type="number" min="0"></label>
       <label>Mode<select id="pMode"><option>Espèces</option><option>Virement</option><option>Mobile Money</option><option>Chèque</option><option>Autre</option></select></label>
@@ -165,7 +165,7 @@ h3{color:var(--vert);margin:4px 0 12px}
   </div>
 
   <div id="tab-audience" class="card hide">
-    <h3>Audience du site — 30 derniers jours</h3>
+    <h3>Audience du site sur les 30 derniers jours</h3>
     <div class="kpis" id="audKpis"></div>
     <h3 style="margin-top:18px">Pages vues par jour</h3>
     <div id="audChart" style="overflow-x:auto"></div>
@@ -196,7 +196,7 @@ const SUPABASE_URL='https://jlawnhtkwkqpbhxtwedl.supabase.co';
 const SUPABASE_KEY='sb_publishable_lOtRr5mZZgJVa3nmA1CrBA_9TtH0zYg';
 const CAME_FROM_INVITE = /type=(invite|recovery|magiclink|signup)/.test(window.location.hash);
 const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-const fmt = n => n==null?'—':Number(n).toLocaleString('fr-FR');
+const fmt = n => n==null?'-':Number(n).toLocaleString('fr-FR');
 const $ = id => document.getElementById(id);
 const STATUTS = ['disponible','vendu','patrimoine_sci_nkonim','patrimoine_teya_soukou','reserve'];
 const badge = s => ({'disponible':'b-dispo','vendu':'b-vendu','patrimoine_sci_nkonim':'b-nkonim','patrimoine_teya_soukou':'b-teya'}[s]||'b-teya');
@@ -281,7 +281,7 @@ async function refresh(){
     supa.from('prospects').select('*').order('created_at',{ascending:false}),
     supa.from('visites').select('ts,page,referrer,ecran,nouvelle_visite,pays,ville,lat,lon').gte('ts',d30).order('ts',{ascending:false}).limit(20000)
   ]);
-  if(lots.error){alert('Accès refusé — session 2FA requise ('+lots.error.message+')');return;}
+  if(lots.error){alert('Accès refusé : session 2FA requise ('+lots.error.message+')');return;}
   renderKpis(lots.data,suivi.data||[]);
   renderLots(lots.data);
   renderVentes(ventes.data||[]);
@@ -313,13 +313,13 @@ function renderAudience(rows){
   days.forEach((k,i)=>{
     const h=Math.round(counts[k]/max*(H-12)),hv=Math.round(vcounts[k]/max*(H-12));
     const x=i*bw+3,y=H-h;
-    svg+='<rect x="'+x+'" y="'+y+'" width="'+(bw-6)+'" height="'+h+'" rx="3" fill="#C9D2EE"><title>'+k+' : '+counts[k]+' pages vues, '+vcounts[k]+' visites</title></rect>';
-    svg+='<rect x="'+x+'" y="'+(H-hv)+'" width="'+(bw-6)+'" height="'+hv+'" rx="3" fill="#2F4BA0"><title>'+k+' : '+vcounts[k]+' visites</title></rect>';
+    svg+='<rect x="'+x+'" y="'+y+'" width="'+(bw-6)+'" height="'+h+'" rx="3" fill="#E4DCC4"><title>'+k+' : '+counts[k]+' pages vues, '+vcounts[k]+' visites</title></rect>';
+    svg+='<rect x="'+x+'" y="'+(H-hv)+'" width="'+(bw-6)+'" height="'+hv+'" rx="3" fill="#8A6612"><title>'+k+' : '+vcounts[k]+' visites</title></rect>';
     if(counts[k]>0)svg+='<text x="'+(x+(bw-6)/2)+'" y="'+(y-3)+'" text-anchor="middle" fill="#5c6a63">'+counts[k]+'</text>';
-    if(i%5===0)svg+='<text x="'+(x+(bw-6)/2)+'" y="'+(H+14)+'" text-anchor="middle" fill="#77836c">'+k.slice(8)+'/'+k.slice(5,7)+'</text>';
+    if(i%5===0)svg+='<text x="'+(x+(bw-6)/2)+'" y="'+(H+14)+'" text-anchor="middle" fill="#5E5A52">'+k.slice(8)+'/'+k.slice(5,7)+'</text>';
   });
-  svg+='<rect x="0" y="'+(H+18)+'" width="10" height="10" fill="#2F4BA0" rx="2"/><text x="15" y="'+(H+27)+'" fill="#5c6a63">visites</text>';
-  svg+='<rect x="70" y="'+(H+18)+'" width="10" height="10" fill="#C9D2EE" rx="2"/><text x="85" y="'+(H+27)+'" fill="#5c6a63">pages vues</text></svg>';
+  svg+='<rect x="0" y="'+(H+18)+'" width="10" height="10" fill="#8A6612" rx="2"/><text x="15" y="'+(H+27)+'" fill="#5c6a63">visites</text>';
+  svg+='<rect x="70" y="'+(H+18)+'" width="10" height="10" fill="#E4DCC4" rx="2"/><text x="85" y="'+(H+27)+'" fill="#5c6a63">pages vues</text></svg>';
   $('audChart').innerHTML=svg;
   // ---- provenance ----
   const refs={};rows.forEach(r=>{const k=r.referrer||'Accès direct / favori';refs[k]=(refs[k]||0)+1;});
@@ -367,7 +367,7 @@ function renderMap(rows){
     if(!groups[key])groups[key]={lat:r.lat,lon:r.lon,n:0,ville:r.ville,pays:r.pays};groups[key].n++;});
   const g=Object.values(groups);
   g.forEach(z=>{
-    L.circleMarker([z.lat,z.lon],{radius:Math.min(6+z.n*2,24),color:'#D6A62B',weight:2,fillColor:'#2F4BA0',fillOpacity:.55})
+    L.circleMarker([z.lat,z.lon],{radius:Math.min(6+z.n*2,24),color:'#D6A62B',weight:2,fillColor:'#8A6612',fillOpacity:.55})
      .bindPopup('<b>'+((z.ville?z.ville+' · ':'')+paysNom(z.pays)+'</b><br>'+z.n+' page(s) vue(s)'))
      .addTo(window._audLayer);
   });
@@ -394,13 +394,13 @@ function renderVentes(rows){
     rows.map(r=>'<tr><td><b>'+r.numero_lot+'</b></td><td>'+(r.acquereur||'')+'</td><td>'+(r.telephone||'')+'</td><td>'+fmt(r.montant_vente)+'</td><td>'+(r.date_vente||'')+'</td><td>'+(r.echeance_finale||'')+'</td><td>'+(r.notes||'')+'</td></tr>').join('');
 }
 function renderPaiements(rows,ventes){
-  const vlot={};ventes.forEach(v=>vlot[v.id]='Lot '+v.numero_lot+' — '+v.acquereur);
+  const vlot={};ventes.forEach(v=>vlot[v.id]='Lot '+v.numero_lot+', '+v.acquereur);
   $('tblPaiements').innerHTML='<tr><th>Vente</th><th>Date</th><th>Montant</th><th>Mode</th><th>Référence</th></tr>'+
     rows.map(r=>'<tr><td>'+(vlot[r.vente_id]||r.vente_id)+'</td><td>'+r.date_paiement+'</td><td>'+fmt(r.montant)+'</td><td>'+(r.mode||'')+'</td><td>'+(r.reference||'')+'</td></tr>').join('');
 }
 function renderLots(rows){
   $('tblLots').innerHTML='<tr><th>N°</th><th>Îlot</th><th>Superficie</th><th>Prix (FCFA)</th><th>Statut</th><th></th></tr>'+
-    rows.map(r=>'<tr><td><b>'+r.numero+'</b></td><td>'+(r.ilot??'—')+'</td><td>'+(r.superficie_m2?fmt(r.superficie_m2)+' m²':'—')+'</td><td>'+fmt(r.prix_fcfa)+'</td>'+
+    rows.map(r=>'<tr><td><b>'+r.numero+'</b></td><td>'+(r.ilot??'-')+'</td><td>'+(r.superficie_m2?fmt(r.superficie_m2)+' m²':'-')+'</td><td>'+fmt(r.prix_fcfa)+'</td>'+
     '<td><span class="badge '+badge(r.statut)+'">'+r.statut+'</span></td>'+
     '<td><select onchange="majStatut('+r.numero+',this)"><option value="">changer…</option>'+STATUTS.filter(s=>s!==r.statut).map(s=>'<option value="'+s+'">'+s+'</option>').join('')+'</select></td></tr>').join('');
 }
@@ -411,7 +411,7 @@ function renderProspects(rows){
 }
 function fillSelects(lots,ventes){
   $('vLot').innerHTML=lots.filter(l=>l.statut==='disponible').map(l=>'<option value="'+l.numero+'">Lot '+l.numero+(l.ilot?' (îlot '+l.ilot+')':'')+'</option>').join('');
-  $('pVente').innerHTML=ventes.map(v=>'<option value="'+v.id+'">Lot '+v.numero_lot+' — '+v.acquereur+'</option>').join('');
+  $('pVente').innerHTML=ventes.map(v=>'<option value="'+v.id+'">Lot '+v.numero_lot+', '+v.acquereur+'</option>').join('');
 }
 async function majStatut(numero,sel){
   if(!sel.value)return;
@@ -427,7 +427,7 @@ async function addVente(){
   const {error}=await supa.from('ventes').insert(row);
   if(error){$('vErr').textContent='Erreur : '+error.message;return;}
   $('vAcq').value='';$('vTel').value='';$('vMontant').value='';$('vNotes').value='';
-  $('vErr').innerHTML='<span class="ok">✓ Vente enregistrée — le lot est retiré du site.</span>';
+  $('vErr').innerHTML='<span class="ok">Vente enregistrée. Le lot est retiré du site.</span>';
   refresh();
 }
 async function addPaiement(){
